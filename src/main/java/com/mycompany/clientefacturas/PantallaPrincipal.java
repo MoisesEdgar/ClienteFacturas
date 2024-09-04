@@ -1,56 +1,83 @@
 package com.mycompany.clientefacturas;
 
 import java.awt.event.ActionEvent;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
+import java.util.Scanner;
+import javax.swing.JOptionPane;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class PantallaPrincipal extends javax.swing.JFrame {
 
     public PantallaPrincipal() {
         initComponents();
-
         btnConsultar.addActionListener(this::onButonConsultarClicked);
     }
 
     private void onButonConsultarClicked(ActionEvent evt) {
+        String folio = getFolio();
 
-        String url = "http://localhost:8080/facturas";
-        String respuesta = "";
-        try {
-            respuesta = peticionGet(url);
-            System.out.println("La respuesta es:\n" + respuesta);
+        if (validar(folio)) {
+            try {
+                peticionGet();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-          
-
-
-        } catch (Exception e) {
-            // Manejar excepción
-            e.printStackTrace();
+            limpiarTxt();
         }
+    }
+
+    private void peticionGet() throws Exception {
+
+        URL url = new URL("http://localhost:8080/facturas");
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("GET");
+        conexion.connect();
+
+        Scanner scanner = new Scanner(url.openStream());
+        StringBuilder jsonFactura = new StringBuilder();
+
+        while (scanner.hasNext()) {
+            jsonFactura.append(scanner.nextLine());
+        }
+
+        scanner.close();
+
+        JSONArray jsonArray = new JSONArray(jsonFactura.toString());
+        JSONObject jsonObject = jsonArray.getJSONObject(0);
+
+        String folio = jsonObject.getString("folio");
+        String fechaExpedicion = jsonObject.getString("fecha_expedicion");
+        Double subtotoal = jsonObject.getDouble("subtotal");
+        Double total = jsonObject.getDouble("total");
+        Integer clienteId = jsonObject.getInt("cliente_id");
+
+        JSONArray jsonArrayp = new JSONArray(jsonObject.getJSONArray("partidas"));
+        JSONObject jsonObjectp = jsonArrayp.getJSONObject(0);
 
     }
 
-    private String peticionGet(String urlP) throws Exception {
-        StringBuilder resultado = new StringBuilder();
-
-        URL url = new URL(urlP);
-
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("GET");
-
-        BufferedReader rd = new BufferedReader(new InputStreamReader(conexion.getInputStream()));
-        String linea;
-
-        while ((linea = rd.readLine()) != null) {
-            resultado.append(linea);
+    private String getFolio() {
+        if (txtFolio.getText().isEmpty()) {
+            return "";
+        } else {
+            return txtFolio.getText();
         }
+    }
 
-        rd.close();
+    private boolean validar(String folio) {
+        if (folio.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No se espesifico el folio de la factura");
+            return false;
+        }
+        return true;
+    }
 
-        return resultado.toString();
+    private void limpiarTxt() {
+        txtFolio.setText("");
+        txtFolio.requestFocus();
     }
 
     @SuppressWarnings("unchecked")
@@ -62,7 +89,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
-        txtCodigo = new javax.swing.JTextField();
+        txtFolio = new javax.swing.JTextField();
         btnConsultar = new javax.swing.JButton();
         btnEliminar = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
@@ -99,7 +126,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.ipadx = 100;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 100);
-        jPanel4.add(txtCodigo, gridBagConstraints);
+        jPanel4.add(txtFolio, gridBagConstraints);
 
         btnConsultar.setText("Consultar");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -210,6 +237,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private javax.swing.JLabel lblTotalArticulos;
     private javax.swing.JLabel lblTotalNeto;
     private javax.swing.JTable tblFacturas;
-    private javax.swing.JTextField txtCodigo;
+    private javax.swing.JTextField txtFolio;
     // End of variables declaration//GEN-END:variables
 }
