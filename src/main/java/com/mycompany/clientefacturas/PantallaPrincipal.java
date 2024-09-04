@@ -2,14 +2,19 @@ package com.mycompany.clientefacturas;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class PantallaPrincipal extends javax.swing.JFrame {
 
@@ -29,25 +34,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private void onButonConsultarClicked(ActionEvent evt) {
         String folio = getFolio();
-        Partida partida = new Partida();
-        partida.nombreArticulo = "folio";
-        partida.cantidad = 1;
-        partida.precio = 6.8;
 
-        modeloFacturas.agregar(partida);
-
-
-        /*  
-            if (validar(folio)) {
-                try {
-                    peticionGet();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                limpiarTxt();
+        if (validar(folio)) {
+            try {
+                peticionGet(folio);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-         */
+
+            limpiarTxt();
+        }
+
     }
 
     private void onModeloFacturasModificado(TableModelEvent evt) {
@@ -56,80 +53,91 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 int rowIndex = evt.getFirstRow();
                 int colIndex = evt.getColumn();
 
-                if (colIndex == 1 || colIndex == 2 ) {
+                if (colIndex == 1 || colIndex == 2) {
                     Partida partida = modeloFacturas.getPartida(rowIndex);
                     Integer cantidad = partida.cantidad;
                     Double precio = partida.precio;
-                    
-                    if (precio < 0.1){
-                        JOptionPane.showMessageDialog(this,"El precio deve ser mayora a 0.1");
-                          modeloFacturas.setValueAt(1.0, evt.getFirstRow(), 2);
+
+                    if (precio < 0.1) {
+                        JOptionPane.showMessageDialog(this, "El precio deve ser mayora a 0.1");
+                        modeloFacturas.setValueAt(1.0, evt.getFirstRow(), 2);
                     }
-                    
+
                     if (cantidad <= 0) {
                         JOptionPane.showMessageDialog(this, "La cantidad deve ser mayor a cero");
                         modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
                     }
                 }
-                
-                
+
                 break;
             //case TableModelEvent.INSERT: 
             //case TableModelEvent.DELETE:
-                
-              
+
         }
         calcularTotales();
     }
-    
-    private void calcularTotales(){
-  
+
+    private void calcularTotales() {
+
         Double totalNeto = 0.0;
         Double totalIva = 0.0;
-        
-        for( int rowIndex = 0; rowIndex < modeloFacturas.getRowCount(); rowIndex++){
-            
+
+        for (int rowIndex = 0; rowIndex < modeloFacturas.getRowCount(); rowIndex++) {
+
             Double total = (Double) modeloFacturas.getValueAt(rowIndex, 3);
             totalNeto += total;
         }
-        
-        totalIva = Math.round((totalNeto + totalNeto * .16)*100)/100d;
-        
-        lblSubtotal.setText(String.valueOf(Math.round(totalNeto*100)/100d));
+
+        totalIva = Math.round((totalNeto + totalNeto * .16) * 100) / 100d;
+
+        lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
         lblTotalIva.setText(String.valueOf(totalIva));
-        
+
     }
-    /*
-        private void peticionGet() throws Exception {
 
-                URL url = new URL("http://localhost:8080/facturas");
-                HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-                conexion.setRequestMethod("GET");
-                conexion.connect();
+    private void peticionGet(String folio) throws Exception {
 
-                Scanner scanner = new Scanner(url.openStream());
-                StringBuilder jsonFactura = new StringBuilder();
+        URL url = new URL("http://localhost:8080/facturas");
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("GET");
+        conexion.connect();
 
-                while (scanner.hasNext()) {
-                    jsonFactura.append(scanner.nextLine());
-                }
+        Scanner scanner = new Scanner(url.openStream());
+        StringBuilder jsonFactura = new StringBuilder();
 
-                scanner.close(); 
+        while (scanner.hasNext()) {
+            jsonFactura.append(scanner.nextLine());
+        }
 
-                JSONArray jsonArray = new JSONArray(jsonFactura.toString());
-                JSONObject jsonObject = jsonArray.getJSONObject(0);
+        scanner.close();
 
-                String folio = jsonObject.getString("folio");
-                String fechaExpedicion = jsonObject.getString("fecha_expedicion");
-                Double subtotoal = jsonObject.getDouble("subtotal");
-                Double total = jsonObject.getDouble("total");
-                Integer clienteId = jsonObject.getInt("cliente_id");
+        JSONArray jsonArray = new JSONArray(jsonFactura.toString());
+        JSONObject jsonObject = jsonArray.getJSONObject(0);
 
-                JSONArray jsonArrayp = new JSONArray(jsonObject.getJSONArray("partidas"));
-                JSONObject jsonObjectp = jsonArrayp.getJSONObject(0);
+        if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
 
-            }
-     */
+            lblFolio.setText(jsonObject.getString("folio"));
+            lblFecha.setText(jsonObject.getString("fecha_expedicion"));
+
+            lblSubtotal.setText(String.valueOf(jsonObject.getDouble("subtotal")));
+            lblTotalIva.setText(String.valueOf(jsonObject.getDouble("total")));
+            Integer clienteId = jsonObject.getInt("cliente_id");
+
+            Partida partida = new Partida();
+            partida.nombreArticulo = "folio";
+            partida.cantidad = 5;
+            partida.precio = 12.1;
+
+            modeloFacturas.agregar(partida);
+
+            JSONArray jsonArrayp = new JSONArray(jsonObject.getJSONArray("partidas"));
+            JSONObject jsonObjectp = jsonArrayp.getJSONObject(0);
+        }else{
+            JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+        }
+
+    }
+
     private String getFolio() {
         if (txtFolio.getText().isEmpty()) {
             return "";
@@ -289,6 +297,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         btnConsultar = new javax.swing.JButton();
         btnEliminar = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        lblFecha = new javax.swing.JLabel();
+        lblFolio = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblFactura = new javax.swing.JTable();
         jPanel5 = new javax.swing.JPanel();
@@ -307,7 +319,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jPanel4.setBackground(new java.awt.Color(255, 255, 255));
         java.awt.GridBagLayout jPanel4Layout = new java.awt.GridBagLayout();
         jPanel4Layout.columnWidths = new int[] {0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0};
-        jPanel4Layout.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0};
+        jPanel4Layout.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0};
         jPanel4.setLayout(jPanel4Layout);
 
         jLabel1.setText("Folio:");
@@ -345,6 +357,34 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.gridy = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         jPanel4.add(jButton1, gridBagConstraints);
+
+        jLabel2.setText("Folio:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel4.add(jLabel2, gridBagConstraints);
+
+        jLabel3.setText("Fecha:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 12;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel4.add(jLabel3, gridBagConstraints);
+
+        lblFecha.setText("/ / /");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 12;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel4.add(lblFecha, gridBagConstraints);
+
+        lblFolio.setText("0000");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel4.add(lblFolio, gridBagConstraints);
 
         jPanel2.add(jPanel4, java.awt.BorderLayout.PAGE_START);
 
@@ -423,6 +463,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
@@ -430,6 +472,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblFecha;
+    private javax.swing.JLabel lblFolio;
     private javax.swing.JLabel lblSubtotal;
     private javax.swing.JLabel lblTotalIva;
     private javax.swing.JTable tblFactura;
