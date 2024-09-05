@@ -22,7 +22,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     public PantallaPrincipal() {
         initComponents();
-        
 
         modeloFacturas.addTableModelListener(this::onModeloFacturasModificado);
 
@@ -31,7 +30,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         tblFactura.getColumnModel().getColumn(3).setCellRenderer(new DecimalesRenderer());
 
         btnConsultar.addActionListener(this::onButonConsultarClicked);
-        //btnEliminar.addActionListener(this::onButonEliminarClicked);
+        btnAgregarPartida.addActionListener(this::onButonAgregarPartidaClicked);
+        btnEliminar.addActionListener(this::onButonEliminarClicked);
+    }
+
+    private void onButonAgregarPartidaClicked(ActionEvent evt) {
+
+        Partida partida = new Partida();
+        partida.nombreArticulo = getNombre();
+        partida.cantidad = getCantidad();
+        partida.precio = getPrecio();
+
+        modeloFacturas.agregar(partida);
+
     }
 
     private void onButonConsultarClicked(ActionEvent evt) {
@@ -50,15 +61,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
-    private void onButonEliminarClicked(ActionEvent evt) throws Exception {
-        /*
-            URL url = new URL ("http://localhost:8080/facturas/1");
-            HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-            conexion.setRequestMethod("DEL");
-            conexion.connect();
-        */
-
-                 
+    private void onButonEliminarClicked(ActionEvent evt) {
+        int index = tblFactura.getSelectedRow();
+        if (index > -1) {
+            modeloFacturas.eliminar(index);
+        }else{
+            JOptionPane.showMessageDialog(this,"Seleccione la partida a Eliminar");
+        }
     }
 
     private void onModeloFacturasModificado(TableModelEvent evt) {
@@ -132,11 +141,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
             if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
 
-               // lblFolio.setText(jsonObject.getString("folio"));
-              //  lblFecha.setText(jsonObject.getString("fecha_expedicion"));
+                // lblFolio.setText(jsonObject.getString("folio"));
+                //  lblFecha.setText(jsonObject.getString("fecha_expedicion"));
                 lblSubtotal.setText(String.valueOf(jsonObject.getDouble("subtotal")));
                 lblTotalIva.setText(String.valueOf(jsonObject.getDouble("total")));
-               // lblCliente.setText(String.valueOf(jsonObject.getInt("cliente_id")));
+                // lblCliente.setText(String.valueOf(jsonObject.getInt("cliente_id")));
 
                 JSONArray jsonArrayp = jsonObject.getJSONArray("partidas");
 
@@ -161,6 +170,31 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             return "";
         } else {
             return txtFolio.getText();
+        }
+    }
+
+    private String getNombre() {
+        if (txtNombre.getText().isEmpty()) {
+            return "";
+
+        } else {
+            return txtNombre.getText();
+        }
+    }
+
+    private Integer getCantidad() {
+        if (txtCantidad.getText().isEmpty()) {
+            return 0;
+        } else {
+            return Integer.parseInt(txtCantidad.getText());
+        }
+    }
+
+    private Double getPrecio() {
+        if (txtPrecio.getText().isEmpty()) {
+            return 0.0;
+        } else {
+            return Double.parseDouble(txtPrecio.getText());
         }
     }
 
@@ -283,6 +317,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         public Partida getPartida(int rowIndex) {
             return partidas.get(rowIndex);
         }
+
+        public void eliminar(int index) {
+            partidas.remove(index);
+            fireTableRowsDeleted(index, index);
+        }
     }
 
     private static class DecimalesRenderer extends DefaultTableCellRenderer {
@@ -313,16 +352,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         txtFolio = new javax.swing.JTextField();
         btnConsultar = new javax.swing.JButton();
+        btnCrear = new javax.swing.JButton();
         btnEliminar = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
-        jTextField3 = new javax.swing.JTextField();
+        txtNombre = new javax.swing.JTextField();
+        txtCantidad = new javax.swing.JTextField();
+        txtPrecio = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
-        jButton2 = new javax.swing.JButton();
+        btnAgregarPartida = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblFactura = new javax.swing.JTable();
         jPanel5 = new javax.swing.JPanel();
@@ -366,21 +405,21 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(btnConsultar, gridBagConstraints);
 
-        btnEliminar.setText("Crear");
+        btnCrear.setText("Crear");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(btnEliminar, gridBagConstraints);
+        jPanel4.add(btnCrear, gridBagConstraints);
 
-        jButton1.setText("Eliminar");
+        btnEliminar.setText("Eliminar");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(jButton1, gridBagConstraints);
+        jPanel4.add(btnEliminar, gridBagConstraints);
 
         jLabel6.setText("Nombre del articulo:");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -409,19 +448,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.ipadx = 100;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.weightx = 0.1;
-        jPanel4.add(jTextField1, gridBagConstraints);
+        jPanel4.add(txtNombre, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 10;
         gridBagConstraints.ipadx = 50;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(jTextField2, gridBagConstraints);
+        jPanel4.add(txtCantidad, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 12;
         gridBagConstraints.ipadx = 50;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(jTextField3, gridBagConstraints);
+        jPanel4.add(txtPrecio, gridBagConstraints);
 
         jLabel10.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel10.setText("Partida");
@@ -431,11 +470,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         jPanel4.add(jLabel10, gridBagConstraints);
 
-        jButton2.setText("Agregar Partida");
+        btnAgregarPartida.setText("Agregar Partida");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 8;
-        jPanel4.add(jButton2, gridBagConstraints);
+        jPanel4.add(btnAgregarPartida, gridBagConstraints);
 
         jPanel2.add(jPanel4, java.awt.BorderLayout.PAGE_START);
 
@@ -505,16 +544,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new PantallaPrincipal().setVisible(true);
-                
+
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAgregarPartida;
     private javax.swing.JButton btnConsultar;
+    private javax.swing.JButton btnCrear;
     private javax.swing.JButton btnEliminar;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel4;
@@ -527,12 +566,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
     private javax.swing.JLabel lblSubtotal;
     private javax.swing.JLabel lblTotalIva;
     private javax.swing.JTable tblFactura;
+    private javax.swing.JTextField txtCantidad;
     private javax.swing.JTextField txtFolio;
+    private javax.swing.JTextField txtNombre;
+    private javax.swing.JTextField txtPrecio;
     // End of variables declaration//GEN-END:variables
 }
