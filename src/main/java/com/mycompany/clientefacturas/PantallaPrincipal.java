@@ -22,6 +22,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     public PantallaPrincipal() {
         initComponents();
+        
 
         modeloFacturas.addTableModelListener(this::onModeloFacturasModificado);
 
@@ -30,14 +31,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         tblFactura.getColumnModel().getColumn(3).setCellRenderer(new DecimalesRenderer());
 
         btnConsultar.addActionListener(this::onButonConsultarClicked);
+        //btnEliminar.addActionListener(this::onButonEliminarClicked);
     }
 
     private void onButonConsultarClicked(ActionEvent evt) {
         String folio = getFolio();
-
         if (validar(folio)) {
             try {
-                peticionGet(folio);
+                if (peticionGetFactura(folio) == false) {
+                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -45,6 +48,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             limpiarTxt();
         }
 
+    }
+
+    private void onButonEliminarClicked(ActionEvent evt) throws Exception {
+        /*
+            URL url = new URL ("http://localhost:8080/facturas/1");
+            HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+            conexion.setRequestMethod("DEL");
+            conexion.connect();
+        */
+
+                 
     }
 
     private void onModeloFacturasModificado(TableModelEvent evt) {
@@ -95,7 +109,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
-    private void peticionGet(String folio) throws Exception {
+    private boolean peticionGetFactura(String folio) throws Exception {
 
         URL url = new URL("http://localhost:8080/facturas");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -112,30 +126,34 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         scanner.close();
 
         JSONArray jsonArray = new JSONArray(jsonFactura.toString());
-        JSONObject jsonObject = jsonArray.getJSONObject(0);
 
-        if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-            lblFolio.setText(jsonObject.getString("folio"));
-            lblFecha.setText(jsonObject.getString("fecha_expedicion"));
+            if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
 
-            lblSubtotal.setText(String.valueOf(jsonObject.getDouble("subtotal")));
-            lblTotalIva.setText(String.valueOf(jsonObject.getDouble("total")));
-            Integer clienteId = jsonObject.getInt("cliente_id");
+                lblFolio.setText(jsonObject.getString("folio"));
+                lblFecha.setText(jsonObject.getString("fecha_expedicion"));
+                lblSubtotal.setText(String.valueOf(jsonObject.getDouble("subtotal")));
+                lblTotalIva.setText(String.valueOf(jsonObject.getDouble("total")));
+                lblCliente.setText(String.valueOf(jsonObject.getInt("cliente_id")));
 
-            Partida partida = new Partida();
-            partida.nombreArticulo = "folio";
-            partida.cantidad = 5;
-            partida.precio = 12.1;
+                JSONArray jsonArrayp = jsonObject.getJSONArray("partidas");
 
-            modeloFacturas.agregar(partida);
+                for (int j = 0; j < jsonArrayp.length(); j++) {
+                    JSONObject jsonObjectp = jsonArrayp.getJSONObject(j);
 
-            JSONArray jsonArrayp = new JSONArray(jsonObject.getJSONArray("partidas"));
-            JSONObject jsonObjectp = jsonArrayp.getJSONObject(0);
-        }else{
-            JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                    Partida partida = new Partida();
+                    partida.nombreArticulo = jsonObjectp.getString("nombre_articulo");
+                    partida.cantidad = jsonObjectp.getInt("cantidad");
+                    partida.precio = jsonObjectp.getDouble("precio");
+
+                    modeloFacturas.agregar(partida);
+                }
+                return true;
+            }
         }
-
+        return false;
     }
 
     private String getFolio() {
@@ -265,7 +283,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         public Partida getPartida(int rowIndex) {
             return partidas.get(rowIndex);
         }
-
     }
 
     private static class DecimalesRenderer extends DefaultTableCellRenderer {
@@ -282,6 +299,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             setValue(formatter.format(value));
             return this;
         }
+
     }
 
     @SuppressWarnings("unchecked")
@@ -301,6 +319,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         lblFecha = new javax.swing.JLabel();
         lblFolio = new javax.swing.JLabel();
+        lblCliente = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblFactura = new javax.swing.JTable();
         jPanel5 = new javax.swing.JPanel();
@@ -319,7 +339,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jPanel4.setBackground(new java.awt.Color(255, 255, 255));
         java.awt.GridBagLayout jPanel4Layout = new java.awt.GridBagLayout();
         jPanel4Layout.columnWidths = new int[] {0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0};
-        jPanel4Layout.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0};
+        jPanel4Layout.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0};
         jPanel4.setLayout(jPanel4Layout);
 
         jLabel1.setText("Folio:");
@@ -385,6 +405,20 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.gridy = 10;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(lblFolio, gridBagConstraints);
+
+        lblCliente.setText("0000");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 14;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel4.add(lblCliente, gridBagConstraints);
+
+        jLabel7.setText("Cliente:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 14;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel4.add(jLabel7, gridBagConstraints);
 
         jPanel2.add(jPanel4, java.awt.BorderLayout.PAGE_START);
 
@@ -454,6 +488,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new PantallaPrincipal().setVisible(true);
+                
             }
         });
     }
@@ -467,11 +502,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblCliente;
     private javax.swing.JLabel lblFecha;
     private javax.swing.JLabel lblFolio;
     private javax.swing.JLabel lblSubtotal;
