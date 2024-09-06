@@ -57,14 +57,47 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
 
-        Partida partida = new Partida();
-        partida.nombreArticulo = getNombre();
-        partida.cantidad = getCantidad();
-        partida.precio = getPrecio();
+        if (validarPartida()) {
+            Partida partida = new Partida();
+            partida.nombreArticulo = getNombre();
+            partida.cantidad = getCantidad();
+            partida.precio = getPrecio();
 
-        modeloFacturas.agregar(partida);
+            modeloFacturas.agregar(partida);
+            limpiarTxtsPartida();
+        }
 
     }
+    
+   private boolean validarPartida(){
+       
+       if(txtNombre.getText().isEmpty()){
+           JOptionPane.showMessageDialog(this, "El nombre del articulo no fue especificado");
+           return false;
+       }
+       
+       if(txtCantidad.getText().isEmpty()){
+           JOptionPane.showMessageDialog(this, "La cantidad no fue espesificada");
+           return false;
+       }
+       
+       if(txtPrecio.getText().isEmpty()){
+           JOptionPane.showMessageDialog(this, "El precio no fue espesificado");
+           return false;
+       }
+       
+       if(getCantidad() <= 0){
+           JOptionPane.showMessageDialog(this,"La cantidad debe ser mayor a 0");
+           return false;
+       }
+       
+       if(getPrecio() < 0.1){
+           JOptionPane.showMessageDialog(this,"El precio debe ser mayor o igual a 0.1");
+           return false;
+       }
+       
+        return true;
+   }
 
     private void onButonConsultarClicked(ActionEvent evt) {
         String folio = getFolio();
@@ -95,9 +128,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         String folio = getFolio();
 
         try {
-            if (validarFacturaExiste(peticionGet(), folio)) {
+            if (validarFacturaExiste(GetFacturas(), folio)) {
                 JOptionPane.showMessageDialog(this, "La Factura con ese Id ya existe");
-            }else{
+            } else {
                 //post para crear factura 
             }
         } catch (Exception e) {
@@ -118,7 +151,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return false;
     }
 
-    private StringBuilder peticionGet() throws Exception {
+    private StringBuilder GetFacturas() throws Exception {
         URL url = new URL("http://localhost:8080/facturas");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
         conexion.setRequestMethod("GET");
