@@ -2,8 +2,6 @@ package com.mycompany.clientefacturas;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +11,8 @@ import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -30,8 +30,29 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         tblFactura.getColumnModel().getColumn(3).setCellRenderer(new DecimalesRenderer());
 
         btnConsultar.addActionListener(this::onButonConsultarClicked);
+        btnAgregar.addActionListener(this::onButonAgregarClicked);
+        btnEliminarPartida.addActionListener(this::onButonEliminarClicked);
         btnAgregarPartida.addActionListener(this::onButonAgregarPartidaClicked);
-        btnEliminar.addActionListener(this::onButonEliminarClicked);
+
+        txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                txtNombreKeyTyped(evt);
+            }
+        });
+        txtCantidad.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                txtCantidadKeyTyped(evt);
+            }
+        });
+        txtPrecio.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                txtPrecioKeyTyped(evt);
+            }
+        });
+
     }
 
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
@@ -56,7 +77,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 e.printStackTrace();
             }
 
-            limpiarTxt();
+            limpiarTxtsFactura();
         }
 
     }
@@ -65,9 +86,54 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         int index = tblFactura.getSelectedRow();
         if (index > -1) {
             modeloFacturas.eliminar(index);
-        }else{
-            JOptionPane.showMessageDialog(this,"Seleccione la partida a Eliminar");
+        } else {
+            JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
         }
+    }
+
+    private void onButonAgregarClicked(ActionEvent evt) {
+        String folio = getFolio();
+
+        try {
+            if (validarFacturaExiste(peticionGet(), folio)) {
+                JOptionPane.showMessageDialog(this, "La Factura con ese Id ya existe");
+            }else{
+                //post para crear factura 
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private boolean validarFacturaExiste(StringBuilder factura, String folio) {
+        JSONArray jsonArray = new JSONArray(factura.toString());
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private StringBuilder peticionGet() throws Exception {
+        URL url = new URL("http://localhost:8080/facturas");
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("GET");
+        conexion.connect();
+
+        Scanner scanner = new Scanner(url.openStream());
+        StringBuilder jsonFactura = new StringBuilder();
+
+        while (scanner.hasNext()) {
+            jsonFactura.append(scanner.nextLine());
+        }
+
+        scanner.close();
+
+        return jsonFactura;
     }
 
     private void onModeloFacturasModificado(TableModelEvent evt) {
@@ -142,7 +208,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
 
                 // lblFolio.setText(jsonObject.getString("folio"));
-                //  lblFecha.setText(jsonObject.getString("fecha_expedicion"));
+                // lblFecha.setText(jsonObject.getString("fecha_expedicion"));
                 lblSubtotal.setText(String.valueOf(jsonObject.getDouble("subtotal")));
                 lblTotalIva.setText(String.valueOf(jsonObject.getDouble("total")));
                 // lblCliente.setText(String.valueOf(jsonObject.getInt("cliente_id")));
@@ -206,9 +272,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return true;
     }
 
-    private void limpiarTxt() {
+    private void limpiarTxtsFactura() {
         txtFolio.setText("");
         txtFolio.requestFocus();
+    }
+
+    private void limpiarTxtsPartida() {
+        txtNombre.setText("");
+        txtCantidad.setText("");
+        txtPrecio.setText("");
+        txtNombre.requestFocus();
     }
 
     private static class Partida {
@@ -341,6 +414,27 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
+    private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
+            evt.consume();
+        }
+    }
+
+    private void txtCantidadKeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (c < '0' || c > '9') {
+            evt.consume();
+        }
+    }
+
+    private void txtPrecioKeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if ((c < '0' || c > '9') && (c != '.')) {
+            evt.consume();
+        }
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -352,8 +446,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         txtFolio = new javax.swing.JTextField();
         btnConsultar = new javax.swing.JButton();
-        btnCrear = new javax.swing.JButton();
-        btnEliminar = new javax.swing.JButton();
+        btnAgregar = new javax.swing.JButton();
+        btnEliminarPartida = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
@@ -362,6 +456,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         txtPrecio = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
         btnAgregarPartida = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        txtCodigo = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblFactura = new javax.swing.JTable();
         jPanel5 = new javax.swing.JPanel();
@@ -405,26 +501,26 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(btnConsultar, gridBagConstraints);
 
-        btnCrear.setText("Crear");
+        btnAgregar.setText("Agregar factura");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(btnCrear, gridBagConstraints);
+        jPanel4.add(btnAgregar, gridBagConstraints);
 
-        btnEliminar.setText("Eliminar");
+        btnEliminarPartida.setText("Eliminar Partida");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 8;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(btnEliminar, gridBagConstraints);
+        jPanel4.add(btnEliminarPartida, gridBagConstraints);
 
         jLabel6.setText("Nombre del articulo:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 10;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         gridBagConstraints.insets = new java.awt.Insets(0, 3, 0, 0);
         jPanel4.add(jLabel6, gridBagConstraints);
@@ -432,32 +528,32 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jLabel8.setText("Cantidad:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         jPanel4.add(jLabel8, gridBagConstraints);
 
         jLabel9.setText("Precio:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         jPanel4.add(jLabel9, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 10;
         gridBagConstraints.ipadx = 100;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.weightx = 0.1;
         jPanel4.add(txtNombre, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.ipadx = 50;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(txtCantidad, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.ipadx = 50;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(txtPrecio, gridBagConstraints);
@@ -466,15 +562,28 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jLabel10.setText("Partida");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 8;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         jPanel4.add(jLabel10, gridBagConstraints);
 
         btnAgregarPartida.setText("Agregar Partida");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 6;
         jPanel4.add(btnAgregarPartida, gridBagConstraints);
+
+        jLabel2.setText("Codigo del cliente:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        jPanel4.add(jLabel2, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.ipadx = 46;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel4.add(txtCodigo, gridBagConstraints);
 
         jPanel2.add(jPanel4, java.awt.BorderLayout.PAGE_START);
 
@@ -550,12 +659,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAgregar;
     private javax.swing.JButton btnAgregarPartida;
     private javax.swing.JButton btnConsultar;
-    private javax.swing.JButton btnCrear;
-    private javax.swing.JButton btnEliminar;
+    private javax.swing.JButton btnEliminarPartida;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -570,6 +680,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private javax.swing.JLabel lblTotalIva;
     private javax.swing.JTable tblFactura;
     private javax.swing.JTextField txtCantidad;
+    private javax.swing.JTextField txtCodigo;
     private javax.swing.JTextField txtFolio;
     private javax.swing.JTextField txtNombre;
     private javax.swing.JTextField txtPrecio;
