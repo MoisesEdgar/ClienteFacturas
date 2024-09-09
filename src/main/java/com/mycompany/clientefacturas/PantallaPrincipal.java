@@ -30,9 +30,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         tblFactura.getColumnModel().getColumn(3).setCellRenderer(new DecimalesRenderer());
 
         btnConsultar.addActionListener(this::onButonConsultarClicked);
-        btnAgregar.addActionListener(this::onButonAgregarClicked);
-        btnEliminarPartida.addActionListener(this::onButonEliminarClicked);
+        btnAgregarFactura.addActionListener(this::onButonAgregarFacturaClicked);
+        btnEliminarFactura.addActionListener(this::onButonEliminarFacturaClicked);
+
         btnAgregarPartida.addActionListener(this::onButonAgregarPartidaClicked);
+        btnEliminarPartida.addActionListener(this::onButonEliminarClicked);
 
         txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
@@ -55,6 +57,72 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
+    //*****************************BOTONES*****************************
+    private void onButonConsultarClicked(ActionEvent evt) {
+
+        String folio = getFolio();
+        if (validarFolio()) {
+            try {
+                StringBuilder facturas = getFacturas();
+
+                if (validarFacturaExiste(facturas, folio) == false) {
+                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                } else {
+                    parsearJson(facturas, folio);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            limpiarTxtsFactura();
+        }
+
+    }
+
+    private void onButonAgregarFacturaClicked(ActionEvent evt) {
+        String folio = getFolio();
+
+        try {
+            if (validarFacturaExiste(getFacturas(), folio)) {
+                JOptionPane.showMessageDialog(this, "La Factura con ese Id ya existe");
+            } else {
+                if (validarFolio()) {
+                    if (validarCodigo()) {
+                        if (validarPartida()) {
+                            JOptionPane.showMessageDialog(this, "mensaje sei");
+                            //POST AGREGAR FACTURA
+                        }
+                    }
+
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void onButonEliminarFacturaClicked(ActionEvent evt) {
+
+        String folio = getFolio();
+        if (validarFolio()) {
+            try {
+                StringBuilder facturas = getFacturas();
+                if (validarFacturaExiste(facturas, folio) == false) {
+                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+
+                } else {
+                    delFactura(obtenerIdFactura(facturas, folio));
+                    JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
+                    limpiarTxtsFactura();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
 
         if (validarPartida()) {
@@ -68,52 +136,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
 
     }
-    
-   private boolean validarPartida(){
-       
-       if(txtNombre.getText().isEmpty()){
-           JOptionPane.showMessageDialog(this, "El nombre del articulo no fue especificado");
-           return false;
-       }
-       
-       if(txtCantidad.getText().isEmpty()){
-           JOptionPane.showMessageDialog(this, "La cantidad no fue espesificada");
-           return false;
-       }
-       
-       if(txtPrecio.getText().isEmpty()){
-           JOptionPane.showMessageDialog(this, "El precio no fue espesificado");
-           return false;
-       }
-       
-       if(getCantidad() <= 0){
-           JOptionPane.showMessageDialog(this,"La cantidad debe ser mayor a 0");
-           return false;
-       }
-       
-       if(getPrecio() < 0.1){
-           JOptionPane.showMessageDialog(this,"El precio debe ser mayor o igual a 0.1");
-           return false;
-       }
-       
-        return true;
-   }
-
-    private void onButonConsultarClicked(ActionEvent evt) {
-        String folio = getFolio();
-        if (validar(folio)) {
-            try {
-                if (peticionGetFactura(folio) == false) {
-                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            limpiarTxtsFactura();
-        }
-
-    }
 
     private void onButonEliminarClicked(ActionEvent evt) {
         int index = tblFactura.getSelectedRow();
@@ -124,53 +146,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private void onButonAgregarClicked(ActionEvent evt) {
-        String folio = getFolio();
-
-        try {
-            if (validarFacturaExiste(GetFacturas(), folio)) {
-                JOptionPane.showMessageDialog(this, "La Factura con ese Id ya existe");
-            } else {
-                //post para crear factura 
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private boolean validarFacturaExiste(StringBuilder factura, String folio) {
-        JSONArray jsonArray = new JSONArray(factura.toString());
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-            if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private StringBuilder GetFacturas() throws Exception {
-        URL url = new URL("http://localhost:8080/facturas");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("GET");
-        conexion.connect();
-
-        Scanner scanner = new Scanner(url.openStream());
-        StringBuilder jsonFactura = new StringBuilder();
-
-        while (scanner.hasNext()) {
-            jsonFactura.append(scanner.nextLine());
-        }
-
-        scanner.close();
-
-        return jsonFactura;
-    }
-
     private void onModeloFacturasModificado(TableModelEvent evt) {
         switch (evt.getType()) {
+
             case TableModelEvent.UPDATE:
                 int rowIndex = evt.getFirstRow();
                 int colIndex = evt.getColumn();
@@ -192,33 +170,48 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
                 break;
-            //case TableModelEvent.INSERT: 
-            //case TableModelEvent.DELETE:
+            //case TableModelEvent.INSERT:
+
+            case TableModelEvent.DELETE:
+                
+                try {
+                delPartida(2);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            break;
 
         }
         calcularTotales();
     }
 
-    private void calcularTotales() {
+    //*****************************API*****************************
+    private boolean delPartida(Integer id) throws Exception {
+        URL url = new URL("http://localhost:8080/partidas/" + id);
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("DELETE");
+        conexion.connect();
 
-        Double totalNeto = 0.0;
-        Double totalIva = 0.0;
+        int responseCode = conexion.getResponseCode();
+        conexion.disconnect();
 
-        for (int rowIndex = 0; rowIndex < modeloFacturas.getRowCount(); rowIndex++) {
-
-            Double total = (Double) modeloFacturas.getValueAt(rowIndex, 3);
-            totalNeto += total;
-        }
-
-        totalIva = Math.round((totalNeto + totalNeto * .16) * 100) / 100d;
-
-        lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
-        lblTotalIva.setText(String.valueOf(totalIva));
-
+        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
     }
 
-    private boolean peticionGetFactura(String folio) throws Exception {
+    private boolean delFactura(Integer id) throws Exception {
+        URL url = new URL("http://localhost:8080/facturas/" + id);
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("DELETE");
+        conexion.connect();
 
+        int responseCode = conexion.getResponseCode();
+        conexion.disconnect();
+
+        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
+    }
+
+    private StringBuilder getFacturas() throws Exception {
         URL url = new URL("http://localhost:8080/facturas");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
         conexion.setRequestMethod("GET");
@@ -233,19 +226,23 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         scanner.close();
 
-        JSONArray jsonArray = new JSONArray(jsonFactura.toString());
+        return jsonFactura;
+    }
 
+    private void parsearJson(StringBuilder factura, String folio) throws Exception {
+
+        JSONArray jsonArray = new JSONArray(factura.toString());
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
 
             if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
 
-                // lblFolio.setText(jsonObject.getString("folio"));
-                // lblFecha.setText(jsonObject.getString("fecha_expedicion"));
                 lblSubtotal.setText(String.valueOf(jsonObject.getDouble("subtotal")));
                 lblTotalIva.setText(String.valueOf(jsonObject.getDouble("total")));
-                // lblCliente.setText(String.valueOf(jsonObject.getInt("cliente_id")));
 
+                // lblCliente.setText(String.valueOf(jsonObject.getInt("cliente_id")));
+                // lblFolio.setText(jsonObject.getString("folio"));
+                // lblFecha.setText(jsonObject.getString("fecha_expedicion"));
                 JSONArray jsonArrayp = jsonObject.getJSONArray("partidas");
 
                 for (int j = 0; j < jsonArrayp.length(); j++) {
@@ -258,12 +255,25 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                     modeloFacturas.agregar(partida);
                 }
-                return true;
             }
         }
-        return false;
     }
 
+    private Integer obtenerIdFactura(StringBuilder factura, String folio) {
+
+        JSONArray jsonArray = new JSONArray(factura.toString());
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+            if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
+                return jsonObject.getInt("id");
+            }
+        }
+        return null;
+    }
+
+    //*****************************VARIABLES*****************************
     private String getFolio() {
         if (txtFolio.getText().isEmpty()) {
             return "";
@@ -297,26 +307,85 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private boolean validar(String folio) {
-        if (folio.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No se espesifico el folio de la factura");
+    //*****************************VALIDACIONES*****************************
+    private void calcularTotales() {
+        Double totalNeto = 0.0;
+        Double totalIva = 0.0;
+
+        for (int rowIndex = 0; rowIndex < modeloFacturas.getRowCount(); rowIndex++) {
+            Double total = (Double) modeloFacturas.getValueAt(rowIndex, 3);
+            totalNeto += total;
+        }
+
+        totalIva = Math.round((totalNeto + totalNeto * .16) * 100) / 100d;
+
+        lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
+        lblTotalIva.setText(String.valueOf(totalIva));
+
+    }
+
+    private boolean validarFacturaExiste(StringBuilder factura, String folio) {
+        JSONArray jsonArray = new JSONArray(factura.toString());
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean validarPartida() {
+
+        if (txtNombre.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El nombre del articulo no fue especificado");
             return false;
         }
+
+        if (txtCantidad.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "La cantidad no fue espesificada");
+            return false;
+        }
+
+        if (txtPrecio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El precio no fue espesificado");
+            return false;
+        }
+
+        if (getCantidad() <= 0) {
+            JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a 0");
+            return false;
+        }
+
+        if (getPrecio() < 0.1) {
+            JOptionPane.showMessageDialog(this, "El precio debe ser mayor o igual a 0.1");
+            return false;
+        }
+
         return true;
     }
 
-    private void limpiarTxtsFactura() {
-        txtFolio.setText("");
-        txtFolio.requestFocus();
+    private boolean validarFolio() {
+        if (txtFolio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No se espesifico el folio de la factura");
+            return false;
+        }
+
+        return true;
     }
 
-    private void limpiarTxtsPartida() {
-        txtNombre.setText("");
-        txtCantidad.setText("");
-        txtPrecio.setText("");
-        txtNombre.requestFocus();
+    private boolean validarCodigo(){
+        if (txtCodigo.getText().isEmpty()){
+            JOptionPane.showMessageDialog(this, "No se espesifico el codigo del cliente");
+            return false;
+        }
+        
+        //validar si existe el cliente o no 
+        
+        return true;
     }
-
+    //*****************************MODELO*****************************
     private static class Partida {
 
         public String nombreArticulo;
@@ -428,6 +497,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             partidas.remove(index);
             fireTableRowsDeleted(index, index);
         }
+
     }
 
     private static class DecimalesRenderer extends DefaultTableCellRenderer {
@@ -447,6 +517,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
+    //*****************************TEXTO*****************************
     private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
         char c = evt.getKeyChar();
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
@@ -468,6 +539,18 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
+    private void limpiarTxtsFactura() {
+        txtFolio.setText("");
+        txtFolio.requestFocus();
+    }
+
+    private void limpiarTxtsPartida() {
+        txtNombre.setText("");
+        txtCantidad.setText("");
+        txtPrecio.setText("");
+        txtNombre.requestFocus();
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -479,7 +562,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         txtFolio = new javax.swing.JTextField();
         btnConsultar = new javax.swing.JButton();
-        btnAgregar = new javax.swing.JButton();
+        btnAgregarFactura = new javax.swing.JButton();
         btnEliminarPartida = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
@@ -487,10 +570,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         txtNombre = new javax.swing.JTextField();
         txtCantidad = new javax.swing.JTextField();
         txtPrecio = new javax.swing.JTextField();
-        jLabel10 = new javax.swing.JLabel();
         btnAgregarPartida = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         txtCodigo = new javax.swing.JTextField();
+        btnEliminarFactura = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblFactura = new javax.swing.JTable();
         jPanel5 = new javax.swing.JPanel();
@@ -509,7 +592,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jPanel4.setBackground(new java.awt.Color(255, 255, 255));
         java.awt.GridBagLayout jPanel4Layout = new java.awt.GridBagLayout();
         jPanel4Layout.columnWidths = new int[] {0, 4, 0, 4, 0};
-        jPanel4Layout.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0};
+        jPanel4Layout.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0};
         jPanel4.setLayout(jPanel4Layout);
 
         jLabel1.setText("Folio:");
@@ -528,24 +611,24 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         btnConsultar.setText("Consultar");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.ipadx = 6;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(btnConsultar, gridBagConstraints);
 
-        btnAgregar.setText("Agregar factura");
+        btnAgregarFactura.setText("Agregar factura");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(btnAgregar, gridBagConstraints);
+        jPanel4.add(btnAgregarFactura, gridBagConstraints);
 
         btnEliminarPartida.setText("Eliminar Partida");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(btnEliminarPartida, gridBagConstraints);
@@ -553,7 +636,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jLabel6.setText("Nombre del articulo:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         gridBagConstraints.insets = new java.awt.Insets(0, 3, 0, 0);
         jPanel4.add(jLabel6, gridBagConstraints);
@@ -561,48 +644,41 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jLabel8.setText("Cantidad:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         jPanel4.add(jLabel8, gridBagConstraints);
 
         jLabel9.setText("Precio:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 16;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         jPanel4.add(jLabel9, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.ipadx = 100;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.weightx = 0.1;
         jPanel4.add(txtNombre, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.ipadx = 50;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(txtCantidad, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 16;
         gridBagConstraints.ipadx = 50;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(txtPrecio, gridBagConstraints);
 
-        jLabel10.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        jLabel10.setText("Partida");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 8;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        jPanel4.add(jLabel10, gridBagConstraints);
-
         btnAgregarPartida.setText("Agregar Partida");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 12;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         jPanel4.add(btnAgregarPartida, gridBagConstraints);
 
         jLabel2.setText("Codigo del cliente:");
@@ -617,6 +693,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.ipadx = 46;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(txtCodigo, gridBagConstraints);
+
+        btnEliminarFactura.setText("Elmiminar Factura");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        jPanel4.add(btnEliminarFactura, gridBagConstraints);
 
         jPanel2.add(jPanel4, java.awt.BorderLayout.PAGE_START);
 
@@ -692,12 +775,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnAgregarFactura;
     private javax.swing.JButton btnAgregarPartida;
     private javax.swing.JButton btnConsultar;
+    private javax.swing.JButton btnEliminarFactura;
     private javax.swing.JButton btnEliminarPartida;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
