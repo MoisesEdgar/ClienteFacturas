@@ -56,7 +56,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         });
 
     }
-
     //*****************************BOTONES*****************************
     private void onButonConsultarClicked(ActionEvent evt) {
 
@@ -88,8 +87,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 if (validarFolio()) {
                     if (validarCodigo()) {
                         if (validarPartida()) {
-                            JOptionPane.showMessageDialog(this, "mensaje sei");
-                            //POST AGREGAR FACTURA
+
+                            
                         }
                     }
 
@@ -168,6 +167,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
                     }
                 }
+                
+                
+                
 
                 break;
             //case TableModelEvent.INSERT:
@@ -557,43 +559,41 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         java.awt.GridBagConstraints gridBagConstraints;
 
         jPanel1 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         txtFolio = new javax.swing.JTextField();
         btnConsultar = new javax.swing.JButton();
         btnAgregarFactura = new javax.swing.JButton();
-        btnEliminarPartida = new javax.swing.JButton();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        txtNombre = new javax.swing.JTextField();
-        txtCantidad = new javax.swing.JTextField();
-        txtPrecio = new javax.swing.JTextField();
-        btnAgregarPartida = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         txtCodigo = new javax.swing.JTextField();
         btnEliminarFactura = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblFactura = new javax.swing.JTable();
         jPanel5 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         lblSubtotal = new javax.swing.JLabel();
         lblTotalIva = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblFactura = new javax.swing.JTable();
+        jPanel3 = new javax.swing.JPanel();
+        btnEliminarPartida = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        txtCantidad = new javax.swing.JTextField();
+        txtPrecio = new javax.swing.JTextField();
+        btnAgregarPartida = new javax.swing.JButton();
+        txtNombre = new javax.swing.JTextField();
 
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        jPanel2.setLayout(new java.awt.BorderLayout());
-
         jPanel4.setBackground(new java.awt.Color(255, 255, 255));
-        java.awt.GridBagLayout jPanel4Layout = new java.awt.GridBagLayout();
-        jPanel4Layout.columnWidths = new int[] {0, 4, 0, 4, 0};
-        jPanel4Layout.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0};
-        jPanel4.setLayout(jPanel4Layout);
+        java.awt.GridBagLayout jPanel4Layout1 = new java.awt.GridBagLayout();
+        jPanel4Layout1.columnWidths = new int[] {0, 4, 0, 4, 0};
+        jPanel4Layout1.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 0};
+        jPanel4.setLayout(jPanel4Layout1);
 
         jLabel1.setText("Folio:");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -625,62 +625,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(btnAgregarFactura, gridBagConstraints);
 
-        btnEliminarPartida.setText("Eliminar Partida");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 14;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(btnEliminarPartida, gridBagConstraints);
-
-        jLabel6.setText("Nombre del articulo:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 12;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 3, 0, 0);
-        jPanel4.add(jLabel6, gridBagConstraints);
-
-        jLabel8.setText("Cantidad:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 14;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        jPanel4.add(jLabel8, gridBagConstraints);
-
-        jLabel9.setText("Precio:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 16;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        jPanel4.add(jLabel9, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 12;
-        gridBagConstraints.ipadx = 100;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        jPanel4.add(txtNombre, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 14;
-        gridBagConstraints.ipadx = 50;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(txtCantidad, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 16;
-        gridBagConstraints.ipadx = 50;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        jPanel4.add(txtPrecio, gridBagConstraints);
-
-        btnAgregarPartida.setText("Agregar Partida");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 12;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        jPanel4.add(btnAgregarPartida, gridBagConstraints);
-
         jLabel2.setText("Codigo del cliente:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -701,30 +645,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         jPanel4.add(btnEliminarFactura, gridBagConstraints);
 
-        jPanel2.add(jPanel4, java.awt.BorderLayout.PAGE_START);
-
-        tblFactura.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-        });
-        jScrollPane1.setViewportView(tblFactura);
-
-        jPanel2.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+        getContentPane().add(jPanel4, java.awt.BorderLayout.PAGE_START);
 
         jPanel5.setBackground(new java.awt.Color(255, 255, 255));
         jPanel5.setLayout(new java.awt.GridBagLayout());
@@ -758,7 +679,97 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(0, 6, 0, 0);
         jPanel5.add(lblTotalIva, gridBagConstraints);
 
-        jPanel2.add(jPanel5, java.awt.BorderLayout.PAGE_END);
+        getContentPane().add(jPanel5, java.awt.BorderLayout.PAGE_END);
+
+        jPanel2.setLayout(new java.awt.BorderLayout());
+
+        tblFactura.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.Integer.class, java.lang.Double.class, java.lang.Double.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        jScrollPane1.setViewportView(tblFactura);
+
+        jPanel2.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        java.awt.GridBagLayout jPanel3Layout = new java.awt.GridBagLayout();
+        jPanel3Layout.columnWidths = new int[] {0, 4, 0, 4, 0, 4, 0};
+        jPanel3Layout.rowHeights = new int[] {0, 7, 0, 7, 0, 7, 0, 7, 0};
+        jPanel3.setLayout(jPanel3Layout);
+
+        btnEliminarPartida.setText("Eliminar Partida");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        jPanel3.add(btnEliminarPartida, gridBagConstraints);
+
+        jLabel6.setText("Nombre del articulo:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        gridBagConstraints.insets = new java.awt.Insets(0, 3, 0, 0);
+        jPanel3.add(jLabel6, gridBagConstraints);
+
+        jLabel8.setText("Cantidad:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        jPanel3.add(jLabel8, gridBagConstraints);
+
+        jLabel9.setText("Precio:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        jPanel3.add(jLabel9, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.ipadx = 50;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel3.add(txtCantidad, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.ipadx = 50;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel3.add(txtPrecio, gridBagConstraints);
+
+        btnAgregarPartida.setText("Agregar Partida");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
+        jPanel3.add(btnAgregarPartida, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 4;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.ipadx = 100;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        jPanel3.add(txtNombre, gridBagConstraints);
+
+        jPanel2.add(jPanel3, java.awt.BorderLayout.PAGE_START);
 
         getContentPane().add(jPanel2, java.awt.BorderLayout.CENTER);
 
@@ -789,6 +800,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
