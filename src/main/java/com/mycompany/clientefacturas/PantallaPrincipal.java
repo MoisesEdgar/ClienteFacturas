@@ -145,6 +145,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onButonEliminarPartidaClicked(ActionEvent evt) {
         int index = tblFactura.getSelectedRow();
         if (index > -1) {
+            Partida partida = modeloFacturas.getPartida(index);
+            String nombre = partida.nombreArticulo;
+
+            try {
+                if(delPartida(obtenerIdPartida(getFacturas(), nombre))){
+                    JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             modeloFacturas.eliminar(index);
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
@@ -176,16 +187,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 break;
             //case TableModelEvent.INSERT:
 
-            case TableModelEvent.DELETE:
-;
-                try {
-                    delPartida(2);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                break;
-
+            //case TableModelEvent.DELETE:
         }
         calcularTotales();
     }
@@ -227,14 +229,36 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return jsonClientes;
     }
 
-    private Integer obtenerIdFactura(StringBuilder factura, String folio) {
-        JSONArray jsonArray = new JSONArray(factura.toString());
+    private Integer obtenerIdFactura(StringBuilder facturas, String folio) {
+        JSONArray jsonArray = new JSONArray(facturas.toString());
 
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
 
             if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
                 return jsonObject.getInt("id");
+            }
+        }
+        return null;
+    }
+
+    private Integer obtenerIdPartida(StringBuilder facturas, String nombre) {
+        
+        JSONArray jsonArray = new JSONArray(facturas.toString());
+        String folio = lblFolio.getText();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+            if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
+                JSONArray jsonPartidas = jsonObject.getJSONArray("partidas");
+                
+                 for (int j = 0; j < jsonPartidas.length(); j++) {
+                    JSONObject jsonObjectpPartidas = jsonPartidas.getJSONObject(j);
+
+                    if(nombre.equalsIgnoreCase(jsonObjectpPartidas.getString("nombre_articulo")))
+                        return jsonObjectpPartidas.getInt("id");
+                }
+                
             }
         }
         return null;
