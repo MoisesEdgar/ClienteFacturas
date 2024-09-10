@@ -1,7 +1,13 @@
 package com.mycompany.clientefacturas;
 
 import java.awt.event.ActionEvent;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
 import javax.swing.JOptionPane;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class Cliente extends javax.swing.JFrame {
 
@@ -16,7 +22,6 @@ public class Cliente extends javax.swing.JFrame {
                 txtNombreKeyTyped(evt);
             }
         });
-
         txtTelefono.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyTyped(java.awt.event.KeyEvent evt) {
@@ -26,33 +31,44 @@ public class Cliente extends javax.swing.JFrame {
 
     }
 
-    private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
-        char c = evt.getKeyChar();
-        if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ' )) {
-            evt.consume();
-        }
-    }
-
-    private void txtTelefonoKeyTyped(java.awt.event.KeyEvent evt) {
-        char c = evt.getKeyChar();
-        if (c < '0' || c > '9') {
-            evt.consume();
-        }
-    }
-
     private void onButonAgregarClicked(ActionEvent evt) {
         String nombre = getNombre();
         String telefono = getTelefono();
         String direccion = getDireccion();
 
-        if (validarTxt()) {
-            
-            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
-            limpiarTxt();
+        try {
+            if (validarTxt()) {
+                peticionPostFactura(nombre, telefono, direccion);
+                JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
+                limpiarTxt();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
     }
 
+    private void peticionPostFactura(String nombre, String telefono, String direccion) throws Exception {
+        URL url = new URL("http://localhost:8080/clientes");
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("POST");
+        conexion.setDoOutput(true);
+
+        JSONObject clienteJson = new JSONObject();
+        clienteJson.put("codigo", "1234");
+        clienteJson.put("nombre", nombre);
+        clienteJson.put("telefono", telefono);
+        clienteJson.put("direccion", direccion);
+
+        try (OutputStream os = conexion.getOutputStream()) {
+            byte[] input = clienteJson.toString().getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+    }
+ 
+    
     private String getNombre() {
         if (txtNombre.getText().isEmpty()) {
             return "";
@@ -103,6 +119,20 @@ public class Cliente extends javax.swing.JFrame {
         txtDireccion.setText("");
     }
 
+    private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {
+            evt.consume();
+        }
+    }
+
+    private void txtTelefonoKeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (c < '0' || c > '9') {
+            evt.consume();
+        }
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -127,7 +157,7 @@ public class Cliente extends javax.swing.JFrame {
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.ipadx = 86;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 4, 0, 0);
         jPanel4.add(txtTelefono, gridBagConstraints);
 
@@ -138,7 +168,6 @@ public class Cliente extends javax.swing.JFrame {
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.ipadx = 35;
         gridBagConstraints.ipady = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 4, 38, 0);
         jPanel4.add(btnAgregar, gridBagConstraints);
 
@@ -146,7 +175,7 @@ public class Cliente extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.insets = new java.awt.Insets(27, 36, 0, 0);
         jPanel4.add(jLabel2, gridBagConstraints);
 
@@ -155,7 +184,7 @@ public class Cliente extends javax.swing.JFrame {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.insets = new java.awt.Insets(10, 36, 0, 0);
         jPanel4.add(jLabel3, gridBagConstraints);
 
@@ -164,7 +193,7 @@ public class Cliente extends javax.swing.JFrame {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
         gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.insets = new java.awt.Insets(10, 36, 0, 0);
         jPanel4.add(jLabel4, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -172,8 +201,8 @@ public class Cliente extends javax.swing.JFrame {
         gridBagConstraints.gridy = 5;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.gridheight = 2;
-        gridBagConstraints.ipadx = 134;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.ipadx = 170;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 4, 0, 0);
         jPanel4.add(txtDireccion, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -181,8 +210,8 @@ public class Cliente extends javax.swing.JFrame {
         gridBagConstraints.gridy = 1;
         gridBagConstraints.gridwidth = 5;
         gridBagConstraints.gridheight = 2;
-        gridBagConstraints.ipadx = 148;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.ipadx = 160;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(24, 4, 0, 30);
         jPanel4.add(txtNombre, gridBagConstraints);
 
