@@ -70,12 +70,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 } else {
                     parsearJson(facturas, folio);
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            limpiarTxtsFactura();
         }
-
+        limpiarTxtsFactura();
     }
 
     private void onButonCrearFacturaClicked(ActionEvent evt) {
@@ -131,12 +131,22 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
 
         if (validarTxtPartida()) {
-            Partida partida = new Partida();
-            partida.nombreArticulo = getNombre();
-            partida.cantidad = getCantidad();
-            partida.precio = getPrecio();
+            try {
+                if (existenciaPartida(getFacturas(), getNombre())) {
+                    JOptionPane.showMessageDialog(this, "El articulo ya esta ingresado");
+                } else {
+                    Partida partida = new Partida();
+                    partida.nombreArticulo = getNombre();
+                    partida.cantidad = getCantidad();
+                    partida.precio = getPrecio();
 
-            modeloFacturas.agregar(partida);
+                    modeloFacturas.agregar(partida);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             limpiarTxtsPartida();
         }
 
@@ -149,7 +159,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             String nombre = partida.nombreArticulo;
 
             try {
-                if(delPartida(obtenerIdPartida(getFacturas(), nombre))){
+                if (delPartida(obtenerIdPartida(getFacturas(), nombre))) {
                     JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
                 }
             } catch (Exception e) {
@@ -243,7 +253,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private Integer obtenerIdPartida(StringBuilder facturas, String nombre) {
-        
+
         JSONArray jsonArray = new JSONArray(facturas.toString());
         String folio = lblFolio.getText();
         for (int i = 0; i < jsonArray.length(); i++) {
@@ -251,14 +261,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
             if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
                 JSONArray jsonPartidas = jsonObject.getJSONArray("partidas");
-                
-                 for (int j = 0; j < jsonPartidas.length(); j++) {
+
+                for (int j = 0; j < jsonPartidas.length(); j++) {
                     JSONObject jsonObjectpPartidas = jsonPartidas.getJSONObject(j);
 
-                    if(nombre.equalsIgnoreCase(jsonObjectpPartidas.getString("nombre_articulo")))
+                    if (nombre.equalsIgnoreCase(jsonObjectpPartidas.getString("nombre_articulo"))) {
                         return jsonObjectpPartidas.getInt("id");
+                    }
                 }
-                
+
             }
         }
         return null;
@@ -376,8 +387,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
-    private boolean existenciaFactura(StringBuilder factura, String folio) {
-        JSONArray jsonArray = new JSONArray(factura.toString());
+    private boolean existenciaFactura(StringBuilder facturas, String folio) {
+        JSONArray jsonArray = new JSONArray(facturas.toString());
 
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -388,13 +399,33 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return false;
     }
 
-    private boolean existenciaCliente(StringBuilder cliente, String codigo) {
-        JSONArray jsonArray = new JSONArray(cliente.toString());
+    private boolean existenciaCliente(StringBuilder clientes, String codigo) {
+        JSONArray jsonArray = new JSONArray(clientes.toString());
 
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             if (codigo.equalsIgnoreCase(jsonObject.getString("folio"))) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean existenciaPartida(StringBuilder facturas, String nombre) {
+        JSONArray jsonArray = new JSONArray(facturas.toString());
+        String folio = lblFolio.getText();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+            if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
+                JSONArray jsonPartidas = jsonObject.getJSONArray("partidas");
+                for (int j = 0; j < jsonPartidas.length(); j++) {
+                    JSONObject jsonObjectpPartidas = jsonPartidas.getJSONObject(j);
+
+                    if (nombre.equalsIgnoreCase(jsonObjectpPartidas.getString("nombre_articulo"))) {
+                        return true;
+                    }
+                }
             }
         }
         return false;

@@ -38,8 +38,14 @@ public class Cliente extends javax.swing.JFrame {
 
         try {
             if (validarTxt()) {
-                peticionPostFactura(nombre, telefono, direccion);
-                JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
+                // peticionPostFactura(nombre, telefono, direccion);
+                StringBuilder clientes = getClientes();
+
+                if (existenciaCliente(clientes, nombre)) {
+                    JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
+                }
                 limpiarTxt();
             }
 
@@ -47,6 +53,36 @@ public class Cliente extends javax.swing.JFrame {
             e.printStackTrace();
         }
 
+    }
+
+    private boolean existenciaCliente(StringBuilder clientes,String nombre){
+        JSONArray jsonArray = new JSONArray (clientes.toString());
+        
+        for(int i =0; i < jsonArray.length(); i++){
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            if (nombre.equalsIgnoreCase(jsonObject.getString("nombre"))){
+                return true;
+            }
+        }
+     return false; 
+    }
+    
+    private StringBuilder getClientes() throws Exception {
+        URL url = new URL("http://localhost:8080/clientes");
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("GET");
+        conexion.connect();
+
+        Scanner scanner = new Scanner(url.openStream());
+        StringBuilder jsonClientes = new StringBuilder();
+
+        while (scanner.hasNext()) {
+            jsonClientes.append(scanner.nextLine());
+        }
+
+        scanner.close();
+
+        return jsonClientes;
     }
 
     private void peticionPostFactura(String nombre, String telefono, String direccion) throws Exception {
@@ -67,8 +103,7 @@ public class Cliente extends javax.swing.JFrame {
         }
 
     }
- 
-    
+
     private String getNombre() {
         if (txtNombre.getText().isEmpty()) {
             return "";
