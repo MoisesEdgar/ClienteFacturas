@@ -45,6 +45,7 @@ public class Cliente extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 } else {
                     JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
+                    System.exit(0);
                 }
                 limpiarTxt();
             }

@@ -59,7 +59,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     //*****************************BOTONES*****************************
     private void onButonConsultarClicked(ActionEvent evt) {
-
+        limpiarTabla();
         String folio = getFolio();
         if (validarTxtFolio()) {
             try {
@@ -68,7 +68,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 if (existenciaFactura(facturas, folio) == false) {
                     JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
                 } else {
-                    parsearJson(facturas, folio);
+                    llenadoTabla(facturas, folio);
                 }
 
             } catch (Exception e) {
@@ -93,8 +93,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             if (existenciaCliente(getClientes(), codigo)) {
                                 // se crear la factuira 
                             } else {
-                                // se llama a la pantalla de cliente 
+                                int eleccion = JOptionPane.showConfirmDialog(null, "No existe un cliente conen sa clave desea agregarlo", "Confirmation", JOptionPane.YES_NO_CANCEL_OPTION);
 
+                                if (eleccion == JOptionPane.YES_OPTION) {
+                                    Cliente cliente = new Cliente();
+                                    cliente.setVisible(true);
+                                } else if (eleccion == JOptionPane.NO_OPTION) {
+                                    limpiarTxtsFactura();
+                                }
                             }
                         }
                     }
@@ -175,9 +181,31 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onModeloFacturasModificado(TableModelEvent evt) {
         int rowIndex = evt.getFirstRow();
         int colIndex = evt.getColumn();
-        switch (evt.getType()) {
 
+        switch (evt.getType()) {
             case TableModelEvent.UPDATE:
+
+               try {
+                String folio = lblFolio.getText();
+                StringBuilder facturas = getFacturas();
+
+                if (colIndex == 0) {
+                    String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
+                    if (nombreArticulo.isEmpty()) {
+                        JOptionPane.showMessageDialog(this, "El campo nombre no puede estar vacio");
+                        //Limpiar tabla
+                        llenadoTabla(facturas, folio);
+                    } else {
+                        if (existenciaPartida(getFacturas(), nombreArticulo)) {
+                            JOptionPane.showMessageDialog(this, "El articulo ya esta registrado");
+                            //Limpiar tabla
+                            llenadoTabla(facturas, folio);
+                        } else {
+                            //modificar en la tabla 
+                        }
+
+                    }
+                }
 
                 if (colIndex == 1 || colIndex == 2) {
                     Partida partida = modeloFacturas.getPartida(rowIndex);
@@ -186,17 +214,24 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                     if (precio < 0.1) {
                         JOptionPane.showMessageDialog(this, "El precio deve ser mayora a 0.1");
-                        modeloFacturas.setValueAt(1.0, evt.getFirstRow(), 2);
+                        //Limpiar tabla
+                        llenadoTabla(facturas, folio);
                     }
 
                     if (cantidad <= 0) {
                         JOptionPane.showMessageDialog(this, "La cantidad deve ser mayor a cero");
-                        modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
+                        //modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
+                        //Limpiar tabla
+                        llenadoTabla(facturas, folio);
                     }
-                }
-                break;
-            //case TableModelEvent.INSERT:
 
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            break;
+
+            //case TableModelEvent.INSERT:
             //case TableModelEvent.DELETE:
         }
         calcularTotales();
@@ -275,7 +310,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return null;
     }
 
-    private void parsearJson(StringBuilder factura, String folio) throws Exception {
+    private void llenadoTabla(StringBuilder factura, String folio) throws Exception {
 
         JSONArray jsonFacturas = new JSONArray(factura.toString());
         for (int i = 0; i < jsonFacturas.length(); i++) {
@@ -477,6 +512,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
 
         return true;
+
     }
 
     //*****************************MODELO*****************************
@@ -594,6 +630,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
+    private void limpiarTabla() {
+        Integer contTabla = modeloFacturas.getRowCount();
+        for (int i = 0; i < contTabla; i++) {
+
+        }
+
+    }
+
     private static class DecimalesRenderer extends DefaultTableCellRenderer {
 
         private final DecimalFormat formatter = new DecimalFormat("#.00");
@@ -611,7 +655,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
-    //*****************************TEXTO*****************************
+//*****************************TEXTO*****************************
     private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
         char c = evt.getKeyChar();
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
@@ -877,10 +921,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jPanel2.add(jPanel3, java.awt.BorderLayout.PAGE_START);
 
         jPanel6.setBackground(new java.awt.Color(255, 255, 255));
-        java.awt.GridBagLayout jPanel6Layout = new java.awt.GridBagLayout();
-        new java.awt.GridBagLayout().columnWidths = new int[] {0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0, 4, 0};
-        new java.awt.GridBagLayout().rowHeights = new int[] {0, 7, 0, 7, 0};
-        jPanel6.setLayout(jPanel6Layout);
+        jPanel6.setLayout(new java.awt.GridBagLayout());
 
         jLabel3.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         jLabel3.setText("Folio de la factura:");
@@ -894,25 +935,24 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 6;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 450);
         jPanel6.add(lblFolio, gridBagConstraints);
 
         jLabel10.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         jLabel10.setText("Fecha de expedicion:");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 8;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 0);
         jPanel6.add(jLabel10, gridBagConstraints);
 
         lblFecha.setText("  /  /   ");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 14;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 300);
+        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 450);
         jPanel6.add(lblFecha, gridBagConstraints);
 
         jPanel2.add(jPanel6, java.awt.BorderLayout.PAGE_END);
