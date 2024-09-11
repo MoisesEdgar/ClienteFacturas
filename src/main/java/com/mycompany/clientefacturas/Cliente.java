@@ -38,13 +38,12 @@ public class Cliente extends javax.swing.JFrame {
 
         try {
             if (validarTxt()) {
-                // peticionPostFactura(nombre, telefono, direccion);
                 StringBuilder clientes = getClientes();
 
                 if (existenciaCliente(clientes, nombre)) {
                     JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 } else {
-                    peticionPostFactura();
+                    postCliente(nombre, telefono ,direccion);
                     JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
 
                     
@@ -70,7 +69,7 @@ public class Cliente extends javax.swing.JFrame {
         return false;
     }
 
-    private boolean peticionPostFactura() throws Exception {
+    private boolean postCliente(String nombre, String telefono, String direccion) throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
 
@@ -81,9 +80,9 @@ public class Cliente extends javax.swing.JFrame {
         
          JSONObject clienteJson = new JSONObject();
         clienteJson.put("codigo", "1234");
-        clienteJson.put("nombre", getNombre());
-        clienteJson.put("telefono", getTelefono());
-        clienteJson.put("direccion", getDireccion());
+        clienteJson.put("nombre", nombre);
+        clienteJson.put("telefono", telefono);
+        clienteJson.put("direccion", direccion);
 
         
  

@@ -2,6 +2,7 @@ package com.mycompany.clientefacturas;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,27 +92,28 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     if (validarTxtCodigo()) {
                         if (validarTxtPartida()) {
                             if (validarExistenciaCliente(getClientes(), codigo)) {
-                              
-                                JOptionPane.showMessageDialog(this, "Se creo una nueva factura");
-                                
+
+                                postFactura();
                                 llenarTabla(getFacturas(), folio);
                                 limpiarTxtsFactura();
                                 limpiarTxtsPartida();
-                                
+                                JOptionPane.showMessageDialog(this, "Se creo una nueva factura");
                             } else {
                                 int eleccion = JOptionPane.showConfirmDialog(null, "No existe un cliente conen sa clave desea agregarlo", "Confirmation", JOptionPane.YES_NO_CANCEL_OPTION);
 
                                 if (eleccion == JOptionPane.YES_OPTION) {
                                     Cliente cliente = new Cliente();
                                     cliente.setVisible(true);
-                                    
+
                                 } else if (eleccion == JOptionPane.NO_OPTION) {
                                     limpiarTxtsFactura();
                                 }
-                                
+
                             }
                         }
                     }
+                } else {
+                    JOptionPane.showMessageDialog(this, "La Factura con ese Id ya existe");
                 }
             }
         } catch (Exception e) {
@@ -171,17 +173,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if (index > -1) {
             Partida partida = modeloFacturas.getPartida(index);
             String nombre = partida.nombreArticulo;
-
             try {
                 if (delPartida(getIdPartida(getFacturas(), nombre))) {
                     JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
-                    modeloFacturas.eliminar(index);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-            
+            modeloFacturas.eliminar(index);
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
         }
@@ -350,8 +349,49 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private boolean postFactura() throws Exception {
+        URL url = new URL("http://localhost:8080/facturas");
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("POST");
 
-        return false;
+        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
+        conexion.setRequestProperty("Accept", "application/json");
+        conexion.setDoOutput(true);
+
+        JSONObject facturaJson = new JSONObject();
+        facturaJson.put("folio", getFolio());
+        facturaJson.put("cliente_id", getCodigo());
+
+        JSONArray partidasJson = new JSONArray();
+
+        JSONObject partidaJson = new JSONObject();
+        partidaJson.put("nombre_articulo", getNombre());
+        partidaJson.put("cantidad", getCantidad());
+        partidaJson.put("precio", getPrecio());
+        partidasJson.put(partidaJson);
+
+        facturaJson.put("partidas", partidasJson);
+
+        try (OutputStream os = conexion.getOutputStream()) {
+            byte[] input = facturaJson.toString().getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+        int responseCode = conexion.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_CREATED) {
+
+            Scanner scanner = new Scanner(conexion.getInputStream());
+            StringBuilder respuesta = new StringBuilder();
+            while (scanner.hasNext()) {
+                respuesta.append(scanner.nextLine());
+            }
+            scanner.close();
+
+            System.out.println("Factura creada exitosamente: " + respuesta.toString());
+            return true;
+        } else {
+            System.out.println("Error al crear factura. Código de respuesta: " + responseCode);
+            return false;
+        }
     }
 
     private void llenarTabla(StringBuilder factura, String folio) throws Exception {
@@ -432,7 +472,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
-                JOptionPane.showMessageDialog(this, "La Factura con ese Id ya existe");
+
                 return true;
             }
         }
