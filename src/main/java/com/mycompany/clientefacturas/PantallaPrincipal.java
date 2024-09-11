@@ -60,50 +60,55 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     //*****************************BOTONES*****************************
     private void onButonConsultarClicked(ActionEvent evt) {
         Integer contTabla = modeloFacturas.getRowCount();
-        
-      limpiarTabla(contTabla);
+
+        limpiarTabla(contTabla);
         String folio = getFolio();
         if (validarTxtFolio()) {
             try {
                 StringBuilder facturas = getFacturas();
 
-                if (existenciaFactura(facturas, folio) == false) {
+                if (validarExistenciaFactura(facturas, folio) == false) {
                     JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
                 } else {
-                    llenadoTabla(facturas, folio);
+                    llenarTabla(facturas, folio);
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-            
+
         limpiarTxtsFactura();
     }
 
     private void onButonCrearFacturaClicked(ActionEvent evt) {
         String folio = getFolio();
         String codigo = getCodigo();
-
         try {
 
             if (validarTxtFolio()) {
-                if (existenciaFactura(getFacturas(), folio)) {
-                    JOptionPane.showMessageDialog(this, "La Factura con ese Id ya existe");
-                } else {
+                if (validarExistenciaFactura(getFacturas(), folio) == false) {
                     if (validarTxtCodigo()) {
                         if (validarTxtPartida()) {
-                            if (existenciaCliente(getClientes(), codigo)) {
-                                // se crear la factuira 
+                            if (validarExistenciaCliente(getClientes(), codigo)) {
+                              
+                                JOptionPane.showMessageDialog(this, "Se creo una nueva factura");
+                                
+                                llenarTabla(getFacturas(), folio);
+                                limpiarTxtsFactura();
+                                limpiarTxtsPartida();
+                                
                             } else {
                                 int eleccion = JOptionPane.showConfirmDialog(null, "No existe un cliente conen sa clave desea agregarlo", "Confirmation", JOptionPane.YES_NO_CANCEL_OPTION);
 
                                 if (eleccion == JOptionPane.YES_OPTION) {
                                     Cliente cliente = new Cliente();
                                     cliente.setVisible(true);
+                                    
                                 } else if (eleccion == JOptionPane.NO_OPTION) {
                                     limpiarTxtsFactura();
                                 }
+                                
                             }
                         }
                     }
@@ -121,8 +126,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if (validarTxtFolio()) {
             try {
                 StringBuilder facturas = getFacturas();
-                if (existenciaFactura(facturas, folio)) {
-                    delFactura(obtenerIdFactura(facturas, folio));
+                if (validarExistenciaPartida(facturas, folio)) {
+                    delFactura(getIdFactura(facturas, folio));
                     JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
                     limpiarTxtsFactura();
                 } else {
@@ -141,7 +146,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         if (validarTxtPartida()) {
             try {
-                if (existenciaPartida(getFacturas(), getNombre())) {
+                if (validarExistenciaPartida(getFacturas(), getNombre())) {
                     JOptionPane.showMessageDialog(this, "El articulo ya esta ingresado");
                 } else {
                     Partida partida = new Partida();
@@ -168,14 +173,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             String nombre = partida.nombreArticulo;
 
             try {
-                if (delPartida(obtenerIdPartida(getFacturas(), nombre))) {
+                if (delPartida(getIdPartida(getFacturas(), nombre))) {
                     JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
+                    modeloFacturas.eliminar(index);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            modeloFacturas.eliminar(index);
+            
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
         }
@@ -197,17 +203,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     if (nombreArticulo.isEmpty()) {
                         JOptionPane.showMessageDialog(this, "El campo nombre no puede estar vacio");
                         //Limpiar tabla
-                        llenadoTabla(facturas, folio);
+
                     } else {
-                        if (existenciaPartida(getFacturas(), nombreArticulo)) {
+                        if (validarExistenciaPartida(getFacturas(), nombreArticulo)) {
                             JOptionPane.showMessageDialog(this, "El articulo ya esta registrado");
-                            //Limpiar tabla
-                            llenadoTabla(facturas, folio);
+                            //Limpiar tabla  
                         } else {
                             //modificar en la tabla 
                         }
 
                     }
+                    llenarTabla(facturas, folio);
                 }
 
                 if (colIndex == 1 || colIndex == 2) {
@@ -218,20 +224,21 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     if (precio < 0.1) {
                         JOptionPane.showMessageDialog(this, "El precio deve ser mayora a 0.1");
                         //Limpiar tabla
-                        llenadoTabla(facturas, folio);
+
                     }
 
                     if (cantidad <= 0) {
                         JOptionPane.showMessageDialog(this, "La cantidad deve ser mayor a cero");
                         //modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
                         //Limpiar tabla
-                        llenadoTabla(facturas, folio);
-                    }
 
+                    }
+                    llenarTabla(facturas, folio);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
             break;
 
             //case TableModelEvent.INSERT:
@@ -277,7 +284,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return jsonClientes;
     }
 
-    private Integer obtenerIdFactura(StringBuilder facturas, String folio) {
+    private Integer getIdFactura(StringBuilder facturas, String folio) {
         JSONArray jsonArray = new JSONArray(facturas.toString());
 
         for (int i = 0; i < jsonArray.length(); i++) {
@@ -290,7 +297,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return null;
     }
 
-    private Integer obtenerIdPartida(StringBuilder facturas, String nombre) {
+    private Integer getIdPartida(StringBuilder facturas, String nombre) {
 
         JSONArray jsonArray = new JSONArray(facturas.toString());
         String folio = lblFolio.getText();
@@ -313,7 +320,41 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return null;
     }
 
-    private void llenadoTabla(StringBuilder factura, String folio) throws Exception {
+    private boolean delPartida(Integer id) throws Exception {
+        URL url = new URL("http://localhost:8080/partidas/" + id);
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("DELETE");
+        conexion.connect();
+
+        int responseCode = conexion.getResponseCode();
+        conexion.disconnect();
+
+        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
+    }
+
+    private boolean delFactura(Integer id) throws Exception {
+        URL url = new URL("http://localhost:8080/facturas/" + id);
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("DELETE");
+        conexion.connect();
+
+        int responseCode = conexion.getResponseCode();
+        conexion.disconnect();
+
+        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
+    }
+
+    private boolean putFactura(Integer id) throws Exception {
+
+        return false;
+    }
+
+    private boolean postFactura() throws Exception {
+
+        return false;
+    }
+
+    private void llenarTabla(StringBuilder factura, String folio) throws Exception {
 
         JSONArray jsonFacturas = new JSONArray(factura.toString());
         for (int i = 0; i < jsonFacturas.length(); i++) {
@@ -340,30 +381,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
             }
         }
-    }
-
-    private boolean delPartida(Integer id) throws Exception {
-        URL url = new URL("http://localhost:8080/partidas/" + id);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("DELETE");
-        conexion.connect();
-
-        int responseCode = conexion.getResponseCode();
-        conexion.disconnect();
-
-        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
-    }
-
-    private boolean delFactura(Integer id) throws Exception {
-        URL url = new URL("http://localhost:8080/facturas/" + id);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("DELETE");
-        conexion.connect();
-
-        int responseCode = conexion.getResponseCode();
-        conexion.disconnect();
-
-        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
     }
 
     //*****************************VARIABLES*****************************
@@ -409,47 +426,32 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     //*****************************VALIDACIONES*****************************
-    private void calcularTotales() {
-        Double totalNeto = 0.0;
-        Double totalIva = 0.0;
-
-        for (int rowIndex = 0; rowIndex < modeloFacturas.getRowCount(); rowIndex++) {
-            Double total = (Double) modeloFacturas.getValueAt(rowIndex, 3);
-            totalNeto += total;
-        }
-
-        totalIva = Math.round((totalNeto + totalNeto * .16) * 100) / 100d;
-
-        lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
-        lblTotalIva.setText(String.valueOf(totalIva));
-
-    }
-
-    private boolean existenciaFactura(StringBuilder facturas, String folio) {
+    private boolean validarExistenciaFactura(StringBuilder facturas, String folio) {
         JSONArray jsonArray = new JSONArray(facturas.toString());
 
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
             if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
+                JOptionPane.showMessageDialog(this, "La Factura con ese Id ya existe");
                 return true;
             }
         }
         return false;
     }
 
-    private boolean existenciaCliente(StringBuilder clientes, String codigo) {
+    private boolean validarExistenciaCliente(StringBuilder clientes, String codigo) {
         JSONArray jsonArray = new JSONArray(clientes.toString());
 
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
-            if (codigo.equalsIgnoreCase(jsonObject.getString("folio"))) {
+            if (codigo.equalsIgnoreCase(jsonObject.getString("codigo"))) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean existenciaPartida(StringBuilder facturas, String nombre) {
+    private boolean validarExistenciaPartida(StringBuilder facturas, String nombre) {
         JSONArray jsonArray = new JSONArray(facturas.toString());
         String folio = lblFolio.getText();
         for (int i = 0; i < jsonArray.length(); i++) {
@@ -515,6 +517,22 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
 
         return true;
+
+    }
+
+    private void calcularTotales() {
+        Double totalNeto = 0.0;
+        Double totalIva = 0.0;
+
+        for (int rowIndex = 0; rowIndex < modeloFacturas.getRowCount(); rowIndex++) {
+            Double total = (Double) modeloFacturas.getValueAt(rowIndex, 3);
+            totalNeto += total;
+        }
+
+        totalIva = Math.round((totalNeto + totalNeto * .16) * 100) / 100d;
+
+        lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
+        lblTotalIva.setText(String.valueOf(totalIva));
 
     }
 
@@ -631,13 +649,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             fireTableRowsDeleted(index, index);
         }
     }
-     private void limpiarTabla(Integer contTabla) {
-            
-            for (int i = 0; i < contTabla; i++) {
-                modeloFacturas.eliminar(i);
-            }
-
-        }
 
     private static class DecimalesRenderer extends DefaultTableCellRenderer {
 
@@ -689,6 +700,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         txtCantidad.setText("");
         txtPrecio.setText("");
         txtNombre.requestFocus();
+    }
+
+    private void limpiarTabla(Integer contTabla) {
+
+        for (int i = 0; i < contTabla; i++) {
+            modeloFacturas.eliminar(i);
+        }
+
     }
 
     @SuppressWarnings("unchecked")

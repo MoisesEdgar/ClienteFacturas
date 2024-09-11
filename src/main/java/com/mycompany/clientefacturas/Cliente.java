@@ -44,8 +44,10 @@ public class Cliente extends javax.swing.JFrame {
                 if (existenciaCliente(clientes, nombre)) {
                     JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 } else {
+                    peticionPostFactura();
                     JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
-                    System.exit(0);
+
+                    
                 }
                 limpiarTxt();
             }
@@ -56,18 +58,59 @@ public class Cliente extends javax.swing.JFrame {
 
     }
 
-    private boolean existenciaCliente(StringBuilder clientes,String nombre){
-        JSONArray jsonArray = new JSONArray (clientes.toString());
-        
-        for(int i =0; i < jsonArray.length(); i++){
+    private boolean existenciaCliente(StringBuilder clientes, String nombre) {
+        JSONArray jsonArray = new JSONArray(clientes.toString());
+
+        for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
-            if (nombre.equalsIgnoreCase(jsonObject.getString("nombre"))){
+            if (nombre.equalsIgnoreCase(jsonObject.getString("nombre"))) {
                 return true;
             }
         }
-     return false; 
+        return false;
     }
-    
+
+    private boolean peticionPostFactura() throws Exception {
+        URL url = new URL("http://localhost:8080/clientes");
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+
+        conexion.setRequestMethod("POST");
+        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
+        conexion.setRequestProperty("Accept", "application/json");
+        conexion.setDoOutput(true);
+        
+         JSONObject clienteJson = new JSONObject();
+        clienteJson.put("codigo", "1234");
+        clienteJson.put("nombre", getNombre());
+        clienteJson.put("telefono", getTelefono());
+        clienteJson.put("direccion", getDireccion());
+
+        
+ 
+        try (OutputStream os = conexion.getOutputStream()) {
+            byte[] input = clienteJson.toString().getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+
+        int responseCode = conexion.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_CREATED) {
+
+            Scanner scanner = new Scanner(conexion.getInputStream());
+            StringBuilder respuesta = new StringBuilder();
+            while (scanner.hasNext()) {
+                respuesta.append(scanner.nextLine());
+            }
+            scanner.close();
+
+            System.out.println("Factura creada exitosamente: " + respuesta.toString());
+            return true;
+        } else {
+            System.out.println("Error al crear factura. Código de respuesta: " + responseCode);
+            return false;
+        }
+    }
+
     private StringBuilder getClientes() throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -84,25 +127,6 @@ public class Cliente extends javax.swing.JFrame {
         scanner.close();
 
         return jsonClientes;
-    }
-
-    private void peticionPostFactura(String nombre, String telefono, String direccion) throws Exception {
-        URL url = new URL("http://localhost:8080/clientes");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("POST");
-        conexion.setDoOutput(true);
-
-        JSONObject clienteJson = new JSONObject();
-        clienteJson.put("codigo", "1234");
-        clienteJson.put("nombre", nombre);
-        clienteJson.put("telefono", telefono);
-        clienteJson.put("direccion", direccion);
-
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = clienteJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
-
     }
 
     private String getNombre() {
@@ -149,12 +173,6 @@ public class Cliente extends javax.swing.JFrame {
         return true;
     }
 
-    private void limpiarTxt() {
-        txtNombre.setText("");
-        txtTelefono.setText("");
-        txtDireccion.setText("");
-    }
-
     private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
         char c = evt.getKeyChar();
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {
@@ -167,6 +185,12 @@ public class Cliente extends javax.swing.JFrame {
         if (c < '0' || c > '9') {
             evt.consume();
         }
+    }
+
+    private void limpiarTxt() {
+        txtNombre.setText("");
+        txtTelefono.setText("");
+        txtDireccion.setText("");
     }
 
     @SuppressWarnings("unchecked")
