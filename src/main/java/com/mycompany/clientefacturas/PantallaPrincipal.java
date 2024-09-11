@@ -59,7 +59,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     //*****************************BOTONES*****************************
     private void onButonConsultarClicked(ActionEvent evt) {
-        limpiarTabla();
+        Integer contTabla = modeloFacturas.getRowCount();
+        
+      limpiarTabla(contTabla);
         String folio = getFolio();
         if (validarTxtFolio()) {
             try {
@@ -75,6 +77,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 e.printStackTrace();
             }
         }
+            
         limpiarTxtsFactura();
     }
 
@@ -627,16 +630,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             partidas.remove(index);
             fireTableRowsDeleted(index, index);
         }
-
     }
-
-    private void limpiarTabla() {
-        Integer contTabla = modeloFacturas.getRowCount();
-        for (int i = 0; i < contTabla; i++) {
+     private void limpiarTabla(Integer contTabla) {
+            
+            for (int i = 0; i < contTabla; i++) {
+                modeloFacturas.eliminar(i);
+            }
 
         }
-
-    }
 
     private static class DecimalesRenderer extends DefaultTableCellRenderer {
 
