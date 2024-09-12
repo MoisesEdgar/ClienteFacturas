@@ -45,7 +45,7 @@ public class Cliente extends javax.swing.JFrame {
                 } else {
                     postCliente(nombre, telefono ,direccion);
                     JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
-
+                        this.dispose();
                     
                 }
                 limpiarTxt();
@@ -93,8 +93,7 @@ public class Cliente extends javax.swing.JFrame {
 
 
         int responseCode = conexion.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_CREATED) {
-
+        if (responseCode == HttpURLConnection.HTTP_OK) {
             Scanner scanner = new Scanner(conexion.getInputStream());
             StringBuilder respuesta = new StringBuilder();
             while (scanner.hasNext()) {
