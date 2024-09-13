@@ -1,0 +1,12 @@
+public class ClaveUnicaPorDatos {
+    public static String generarClave(String nombre, String telefono, String direccion) {
+        String datos = nombre + telefono + direccion;
+        // Generar hash en formato hexadecimal
+        return Integer.toHexString(datos.hashCode()).toUpperCase();
+    }
+
+    public static void main(String[] args) {
+        String claveUnica = generarClave("Edgar Moisés", "6878787854", "Calle 11");
+        System.out.println("Clave única basada en datos: " + claveUnica);
+    }
+}
