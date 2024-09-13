@@ -43,9 +43,11 @@ public class Cliente extends javax.swing.JFrame {
                 if (existenciaCliente(clientes, nombre)) {
                     JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 } else {
-                    postCliente(nombre, telefono ,direccion);
-                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente");
-                        this.dispose();
+                    String codigo = generarCodigo(nombre, telefono, direccion);
+                    postCliente(codigo, nombre, telefono ,direccion);
+                    
+                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
+                    this.dispose();
                     
                 }
                 limpiarTxt();
@@ -69,7 +71,7 @@ public class Cliente extends javax.swing.JFrame {
         return false;
     }
 
-    private boolean postCliente(String nombre, String telefono, String direccion) throws Exception {
+    private boolean postCliente(String codigo, String nombre, String telefono, String direccion) throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
 
@@ -79,7 +81,7 @@ public class Cliente extends javax.swing.JFrame {
         conexion.setDoOutput(true);
         
          JSONObject clienteJson = new JSONObject();
-        clienteJson.put("codigo", "1234");
+        clienteJson.put("codigo", codigo);
         clienteJson.put("nombre", nombre);
         clienteJson.put("telefono", telefono);
         clienteJson.put("direccion", direccion);
@@ -171,6 +173,13 @@ public class Cliente extends javax.swing.JFrame {
         return true;
     }
 
+
+    public String generarCodigo(String nombre, String telefono, String direccion) {
+        String datos = nombre + telefono + direccion;
+        
+        return Integer.toHexString(datos.hashCode()).toUpperCase();
+    }
+ 
     private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
         char c = evt.getKeyChar();
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {
@@ -190,6 +199,9 @@ public class Cliente extends javax.swing.JFrame {
         txtTelefono.setText("");
         txtDireccion.setText("");
     }
+    
+    
+    
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
