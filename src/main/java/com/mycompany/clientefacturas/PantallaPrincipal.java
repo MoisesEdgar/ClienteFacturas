@@ -101,12 +101,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             Integer idCliente = getIdClientes(peticionGetClientes(), codigo);
 
                             if (idCliente != null) {
-                                peticionPostFactura(folio, codigo, nombre, cantidad, precio);                           
-                                idFactura = getIdFactura(peticionGetFacturas(),folio);
+                                peticionPostFactura(folio, codigo, nombre, cantidad, precio);
+                                idFactura = getIdFactura(peticionGetFacturas(), folio);
                                 folio = "F" + String.valueOf(idFactura);
                                 peticionPutFolio(idFactura, folio);
                                 JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + folio);
-                                
+
                                 limpiarTxtsFactura();
                                 limpiarTxtsPartida();
                                 JOptionPane.showMessageDialog(this, "Se creo una nueva factura");
@@ -240,7 +240,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         switch (evt.getType()) {
             case TableModelEvent.UPDATE:
-
                try {
                 String folio = lblFolio.getText();
                 Integer idFactura = getIdFactura(peticionGetFacturas(), folio);
@@ -295,7 +294,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 if (colIndex == 0 || colIndex == 1 || colIndex == 2) {
                     limpiarTabla();
-                    parsearJson(peticionGetFactura(idFactura));
+                    parsearJson(peticionGetFactura(idFactura));               
                 }
 
             } catch (Exception e) {
@@ -304,8 +303,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
             break;
 
-            //case TableModelEvent.INSERT:
-            //case TableModelEvent.DELETE:
+          //case TableModelEvent.INSERT:
+          //case TableModelEvent.DELETE:
+              
+         
         }
         calcularTotales();
     }
@@ -352,7 +353,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
         return null;
     }
-    
+
     private StringBuilder peticionGetFacturas() throws Exception {
         URL url = new URL("http://localhost:8080/facturas");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -450,7 +451,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         partidaJson.put("cantidad", cantidad);
         partidaJson.put("precio", precio);
         partidasJson.put(partidaJson);
-
+        
         facturaJson.put("partidas", partidasJson);
 
         try (OutputStream os = conexion.getOutputStream()) {
@@ -475,7 +476,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         }
     }
-    
+
     private void peticionPutFolio(Integer idFactura, String folio) throws Exception {
         URL url = new URL("http://localhost:8080/facturas/" + idFactura);
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -487,7 +488,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         JSONObject facturaJson = new JSONObject();
         facturaJson.put("folio", folio);
-  
 
         try (OutputStream os = conexion.getOutputStream()) {
             byte[] input = facturaJson.toString().getBytes("utf-8");
@@ -511,6 +511,42 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         }
     }
+    
+    private void peticionPutTotales(Integer idFactura, Double subtotal, Double total) throws Exception {
+            URL url = new URL("http://localhost:8080/facturas/" + idFactura);
+            HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+            conexion.setRequestMethod("PUT");
+
+            conexion.setRequestProperty("Content-Type", "application/json; utf-8");
+            conexion.setRequestProperty("Accept", "application/json");
+            conexion.setDoOutput(true);
+
+            JSONObject facturaJson = new JSONObject();
+            facturaJson.put("subtotal", subtotal);
+            facturaJson.put("total", total);
+
+            try (OutputStream os = conexion.getOutputStream()) {
+                byte[] input = facturaJson.toString().getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = conexion.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+
+                Scanner scanner = new Scanner(conexion.getInputStream());
+                StringBuilder respuesta = new StringBuilder();
+                while (scanner.hasNext()) {
+                    respuesta.append(scanner.nextLine());
+                }
+                scanner.close();
+
+                System.out.println("Folio de la factura actualizada exitosamente: " + respuesta.toString());
+
+            } else {
+                System.out.println("Error al actualizar el folio de la factura. Código de respuesta: " + responseCode);
+
+            }
+        }
 
     private boolean peticionPostFactura(String folio, String codigo, String nombre, Integer cantidad, Double precio) throws Exception {
         URL url = new URL("http://localhost:8080/facturas");
@@ -707,7 +743,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
         lblTotalIva.setText(String.valueOf(totalIva));
-
+        
+        try{
+            String folio = lblFolio.getText();
+            Integer id = getIdFactura(peticionGetFacturas(), folio);
+            peticionPutTotales(id,totalNeto,totalIva);
+            
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        
+        
     }
 
     //*****************************MODELO*****************************

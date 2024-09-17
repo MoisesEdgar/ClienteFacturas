@@ -87,7 +87,6 @@ public class Cliente extends javax.swing.JFrame {
         return 0;
     }
     
-    
     private boolean existenciaCliente(StringBuilder clientes, String nombre) {
         JSONArray jsonArray = new JSONArray(clientes.toString());
 
@@ -180,7 +179,6 @@ public class Cliente extends javax.swing.JFrame {
         return false;
     }
     
-    
     private void peticionPutFactura(Integer idFactura, Integer idPartida, String nombre, Integer cantidad, Double precio) throws Exception {
         URL url = new URL("http://localhost:8080/facturas/" + idFactura);
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -225,17 +223,6 @@ public class Cliente extends javax.swing.JFrame {
 
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     private StringBuilder getClientes() throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
