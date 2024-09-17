@@ -43,9 +43,11 @@ public class Cliente extends javax.swing.JFrame {
                 if (existenciaCliente(clientes, nombre)) {
                     JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 } else {
-                    String codigo = generarCodigo(nombre, telefono, direccion);
-                    postCliente(codigo, nombre, telefono ,direccion);
-                    
+                  
+                    postCliente(nombre, telefono ,direccion);
+                    Integer id = getIdCliente(nombre);
+                    String codigo = "C" + String.valueOf(id);
+                    putCliente(id,codigo);
                     JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
                     this.dispose();
                     
@@ -59,6 +61,33 @@ public class Cliente extends javax.swing.JFrame {
 
     }
 
+    private Integer getIdCliente(String nombre) throws Exception {
+        URL url = new URL ("http://localhost:8080/clientes");
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("GET");
+        conexion.connect();
+        
+        Scanner scanner = new Scanner(url.openStream());
+        StringBuilder jsonClientes = new StringBuilder();
+        
+        while(scanner.hasNext()){
+            jsonClientes.append (scanner.nextLine());
+        }
+        scanner.close();
+        
+        JSONArray jsonArray = new JSONArray(jsonClientes.toString());
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+            if (nombre.equalsIgnoreCase(jsonObject.getString("nombre"))) {
+                return jsonObject.getInt("id");
+            }
+        }
+        return 0;
+    }
+    
+    
     private boolean existenciaCliente(StringBuilder clientes, String nombre) {
         JSONArray jsonArray = new JSONArray(clientes.toString());
 
@@ -71,7 +100,7 @@ public class Cliente extends javax.swing.JFrame {
         return false;
     }
 
-    private boolean postCliente(String codigo, String nombre, String telefono, String direccion) throws Exception {
+    private boolean postCliente( String nombre, String telefono, String direccion) throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
 
@@ -81,7 +110,7 @@ public class Cliente extends javax.swing.JFrame {
         conexion.setDoOutput(true);
         
          JSONObject clienteJson = new JSONObject();
-        clienteJson.put("codigo", codigo);
+        clienteJson.put("codigo", nombre);
         clienteJson.put("nombre", nombre);
         clienteJson.put("telefono", telefono);
         clienteJson.put("direccion", direccion);
@@ -111,6 +140,103 @@ public class Cliente extends javax.swing.JFrame {
         }
     }
 
+    private boolean putCliente(Integer id, String codigo) throws Exception {
+        URL url = new URL("http://localhost:8080/clientes/" + id);
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("PUT");
+
+        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
+        conexion.setRequestProperty("Accept", "application/json");
+        conexion.setDoOutput(true);
+        
+        
+        JSONObject clienteJson = new JSONObject();
+        clienteJson.put("codigo", codigo);
+
+        try (OutputStream os = conexion.getOutputStream()) {
+            byte[] input = clienteJson.toString().getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+        int responseCode = conexion.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+
+            Scanner scanner = new Scanner(conexion.getInputStream());
+            StringBuilder respuesta = new StringBuilder();
+            while (scanner.hasNext()) {
+                respuesta.append(scanner.nextLine());
+            }
+            scanner.close();
+
+            System.out.println("Cliente actualizada exitosamente: " + respuesta.toString());
+
+        } else {
+            System.out.println("Error al actualizar cliente. Código de respuesta: " + responseCode);
+
+        }
+        
+        
+        
+        return false;
+    }
+    
+    
+    private void peticionPutFactura(Integer idFactura, Integer idPartida, String nombre, Integer cantidad, Double precio) throws Exception {
+        URL url = new URL("http://localhost:8080/facturas/" + idFactura);
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("PUT");
+
+        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
+        conexion.setRequestProperty("Accept", "application/json");
+        conexion.setDoOutput(true);
+
+        JSONObject facturaJson = new JSONObject();
+        JSONArray partidasJson = new JSONArray();
+
+        JSONObject partidaJson = new JSONObject();
+
+        partidaJson.put("id", idPartida);
+        partidaJson.put("nombre_articulo", nombre);
+        partidaJson.put("cantidad", cantidad);
+        partidaJson.put("precio", precio);
+        partidasJson.put(partidaJson);
+
+        facturaJson.put("partidas", partidasJson);
+
+        try (OutputStream os = conexion.getOutputStream()) {
+            byte[] input = facturaJson.toString().getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+        int responseCode = conexion.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+
+            Scanner scanner = new Scanner(conexion.getInputStream());
+            StringBuilder respuesta = new StringBuilder();
+            while (scanner.hasNext()) {
+                respuesta.append(scanner.nextLine());
+            }
+            scanner.close();
+
+            System.out.println("Factura actualizada exitosamente: " + respuesta.toString());
+
+        } else {
+            System.out.println("Error al actualizar factura. Código de respuesta: " + responseCode);
+
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     private StringBuilder getClientes() throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -172,8 +298,7 @@ public class Cliente extends javax.swing.JFrame {
 
         return true;
     }
-
-
+    
     public String generarCodigo(String nombre, String telefono, String direccion) {
         String datos = nombre + telefono + direccion;
         
@@ -199,9 +324,6 @@ public class Cliente extends javax.swing.JFrame {
         txtTelefono.setText("");
         txtDireccion.setText("");
     }
-    
-    
-    
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
