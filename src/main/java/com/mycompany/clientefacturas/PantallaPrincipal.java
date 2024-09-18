@@ -73,9 +73,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 } else {
                     JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
                 }
-
             } catch (Exception e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
             }
         }
 
@@ -135,7 +134,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
         }
     }
 
@@ -158,7 +157,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
             }
 
         }
@@ -202,7 +201,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
             }
 
         }
@@ -220,13 +219,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 Integer id = getIdFactura(peticionGetFacturas(), lblFolio.getText());
                 peticionDelPartida(getIdPartida(peticionGetFactura(id), nombre));
-
+                modeloFacturas.eliminar(index);
                 JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
 
             } catch (Exception e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
             }
-            modeloFacturas.eliminar(index);
+
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
         }
@@ -294,19 +293,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 if (colIndex == 0 || colIndex == 1 || colIndex == 2) {
                     limpiarTabla();
-                    parsearJson(peticionGetFactura(idFactura));               
+                    parsearJson(peticionGetFactura(idFactura));
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
             }
 
             break;
 
-          //case TableModelEvent.INSERT:
-          //case TableModelEvent.DELETE:
-              
-         
+            //case TableModelEvent.INSERT:
+            //case TableModelEvent.DELETE:
         }
         calcularTotales();
     }
@@ -451,7 +448,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         partidaJson.put("cantidad", cantidad);
         partidaJson.put("precio", precio);
         partidasJson.put(partidaJson);
-        
+
         facturaJson.put("partidas", partidasJson);
 
         try (OutputStream os = conexion.getOutputStream()) {
@@ -511,42 +508,42 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         }
     }
-    
+
     private void peticionPutTotales(Integer idFactura, Double subtotal, Double total) throws Exception {
-            URL url = new URL("http://localhost:8080/facturas/" + idFactura);
-            HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-            conexion.setRequestMethod("PUT");
+        URL url = new URL("http://localhost:8080/facturas/" + idFactura);
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("PUT");
 
-            conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-            conexion.setRequestProperty("Accept", "application/json");
-            conexion.setDoOutput(true);
+        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
+        conexion.setRequestProperty("Accept", "application/json");
+        conexion.setDoOutput(true);
 
-            JSONObject facturaJson = new JSONObject();
-            facturaJson.put("subtotal", subtotal);
-            facturaJson.put("total", total);
+        JSONObject facturaJson = new JSONObject();
+        facturaJson.put("subtotal", subtotal);
+        facturaJson.put("total", total);
 
-            try (OutputStream os = conexion.getOutputStream()) {
-                byte[] input = facturaJson.toString().getBytes("utf-8");
-                os.write(input, 0, input.length);
-            }
-
-            int responseCode = conexion.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-
-                Scanner scanner = new Scanner(conexion.getInputStream());
-                StringBuilder respuesta = new StringBuilder();
-                while (scanner.hasNext()) {
-                    respuesta.append(scanner.nextLine());
-                }
-                scanner.close();
-
-                System.out.println("Folio de la factura actualizada exitosamente: " + respuesta.toString());
-
-            } else {
-                System.out.println("Error al actualizar el folio de la factura. Código de respuesta: " + responseCode);
-
-            }
+        try (OutputStream os = conexion.getOutputStream()) {
+            byte[] input = facturaJson.toString().getBytes("utf-8");
+            os.write(input, 0, input.length);
         }
+
+        int responseCode = conexion.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+
+            Scanner scanner = new Scanner(conexion.getInputStream());
+            StringBuilder respuesta = new StringBuilder();
+            while (scanner.hasNext()) {
+                respuesta.append(scanner.nextLine());
+            }
+            scanner.close();
+
+            System.out.println("Folio de la factura actualizada exitosamente: " + respuesta.toString());
+
+        } else {
+            System.out.println("Error al actualizar el folio de la factura. Código de respuesta: " + responseCode);
+
+        }
+    }
 
     private boolean peticionPostFactura(String folio, String codigo, String nombre, Integer cantidad, Double precio) throws Exception {
         URL url = new URL("http://localhost:8080/facturas");
@@ -558,7 +555,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         conexion.setDoOutput(true);
 
         JSONObject facturaJson = new JSONObject();
-        facturaJson.put("folio", folio);//crears
+        facturaJson.put("folio", folio);
         facturaJson.put("cliente_id", codigo);
 
         JSONArray partidasJson = new JSONArray();
@@ -594,7 +591,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private void parsearJson(StringBuilder factura) throws Exception {
+    private void parsearJson(StringBuilder factura) {
 
         JSONObject jsonObjectFacturas = new JSONObject(factura.toString());
 
@@ -743,17 +740,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
         lblTotalIva.setText(String.valueOf(totalIva));
-        
-        try{
+
+        try {
             String folio = lblFolio.getText();
             Integer id = getIdFactura(peticionGetFacturas(), folio);
-            peticionPutTotales(id,totalNeto,totalIva);
-            
-        }catch(Exception e){
+            peticionPutTotales(id, totalNeto, totalIva);
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        
-        
+
     }
 
     //*****************************MODELO*****************************
