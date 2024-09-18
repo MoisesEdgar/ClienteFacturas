@@ -56,7 +56,7 @@ public class Cliente extends javax.swing.JFrame {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
         }
 
     }

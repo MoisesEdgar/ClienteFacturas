@@ -242,6 +242,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                try {
                 String folio = lblFolio.getText();
                 Integer idFactura = getIdFactura(peticionGetFacturas(), folio);
+                String nombreAnterior = getNommbreAnterior(peticionGetFactura(idFactura), rowIndex);
 
                 if (colIndex == 0) {
                     String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
@@ -287,7 +288,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
                     Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
 
-                    Integer idPartida = getIdPartida(peticionGetFactura(idFactura), nombre);
+                    Integer idPartida = getIdPartida(peticionGetFactura(idFactura), nombreAnterior);
                     peticionPutFactura(idFactura, idPartida, nombre, cantidad, precio);
                 }
 
@@ -349,6 +350,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         }
         return null;
+    }
+
+    private String getNommbreAnterior(StringBuilder factura, Integer index) {
+        JSONObject jsonObject = new JSONObject(factura.toString());
+        JSONArray jsonPartidas = jsonObject.getJSONArray("partidas");
+
+        JSONObject jsonObjectpPartidas = jsonPartidas.getJSONObject(index);
+
+        return jsonObjectpPartidas.getString("nombre_articulo");
+
     }
 
     private StringBuilder peticionGetFacturas() throws Exception {
