@@ -236,13 +236,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         int rowIndex = evt.getFirstRow();
         int colIndex = evt.getColumn();
         boolean valido = false;
+        String nombreAnterior = "";
 
         switch (evt.getType()) {
             case TableModelEvent.UPDATE:
                try {
                 String folio = lblFolio.getText();
                 Integer idFactura = getIdFactura(peticionGetFacturas(), folio);
-                String nombreAnterior = getNommbreAnterior(peticionGetFactura(idFactura), rowIndex);
+                
+                if(colIndex >-1){
+                 nombreAnterior = getNommbreAnterior(peticionGetFactura(idFactura), rowIndex); 
+                }
 
                 if (colIndex == 0) {
                     String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
