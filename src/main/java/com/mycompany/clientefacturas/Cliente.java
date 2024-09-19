@@ -5,6 +5,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,6 +33,10 @@ public class Cliente extends javax.swing.JFrame {
 
     }
 
+    
+    
+    
+
     private void onButonAgregarClicked(ActionEvent evt) {
         String nombre = getNombre();
         String telefono = getTelefono();
@@ -45,6 +51,7 @@ public class Cliente extends javax.swing.JFrame {
                 } else {
                   
                     postCliente(nombre, telefono ,direccion);
+                    
                     Integer id = getIdCliente(nombre);
                     String codigo = "C" + String.valueOf(id);
                     putCliente(id,codigo);
@@ -131,10 +138,10 @@ public class Cliente extends javax.swing.JFrame {
             }
             scanner.close();
 
-            System.out.println("Factura creada exitosamente: " + respuesta.toString());
+            System.out.println("Cliente agregado corectamente: " + respuesta.toString());
             return true;
         } else {
-            System.out.println("Error al crear factura. Código de respuesta: " + responseCode);
+            System.out.println("Error al crear cliente. Código de respuesta: " + responseCode);
             return false;
         }
     }
@@ -179,50 +186,8 @@ public class Cliente extends javax.swing.JFrame {
         return false;
     }
     
-    private void peticionPutFactura(Integer idFactura, Integer idPartida, String nombre, Integer cantidad, Double precio) throws Exception {
-        URL url = new URL("http://localhost:8080/facturas/" + idFactura);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("PUT");
-
-        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-        conexion.setRequestProperty("Accept", "application/json");
-        conexion.setDoOutput(true);
-
-        JSONObject facturaJson = new JSONObject();
-        JSONArray partidasJson = new JSONArray();
-
-        JSONObject partidaJson = new JSONObject();
-
-        partidaJson.put("id", idPartida);
-        partidaJson.put("nombre_articulo", nombre);
-        partidaJson.put("cantidad", cantidad);
-        partidaJson.put("precio", precio);
-        partidasJson.put(partidaJson);
-
-        facturaJson.put("partidas", partidasJson);
-
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = facturaJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
-
-        int responseCode = conexion.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-
-            Scanner scanner = new Scanner(conexion.getInputStream());
-            StringBuilder respuesta = new StringBuilder();
-            while (scanner.hasNext()) {
-                respuesta.append(scanner.nextLine());
-            }
-            scanner.close();
-
-            System.out.println("Factura actualizada exitosamente: " + respuesta.toString());
-
-        } else {
-            System.out.println("Error al actualizar factura. Código de respuesta: " + responseCode);
-
-        }
-    }
+    
+    
     
     private StringBuilder getClientes() throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
