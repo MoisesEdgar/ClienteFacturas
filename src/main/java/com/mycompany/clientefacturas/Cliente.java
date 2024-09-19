@@ -186,9 +186,6 @@ public class Cliente extends javax.swing.JFrame {
         return false;
     }
     
-    
-    
-    
     private StringBuilder getClientes() throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
