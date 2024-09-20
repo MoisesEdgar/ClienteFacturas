@@ -40,7 +40,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         txtFolio.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyPressed(KeyEvent evt) {
+            public void keyReleased(KeyEvent evt) {
                 txtFolioKeyPressed(evt);
             }
         });
@@ -69,6 +69,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     //*****************************BOTONES*****************************
+    
     private void txtFolioKeyPressed(KeyEvent evt) {
         if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
             limpiarLblFactura();
