@@ -2,6 +2,8 @@ package com.mycompany.clientefacturas;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -30,54 +32,65 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         tblFactura.getColumnModel().getColumn(2).setCellRenderer(new DecimalesRenderer());
         tblFactura.getColumnModel().getColumn(3).setCellRenderer(new DecimalesRenderer());
 
-        btnConsultar.addActionListener(this::onButonConsultarClicked);
         btnCrearFactura.addActionListener(this::onButonCrearFacturaClicked);
         btnEliminarFactura.addActionListener(this::onButonEliminarFacturaClicked);
 
         btnAgregarPartida.addActionListener(this::onButonAgregarPartidaClicked);
         btnEliminarPartida.addActionListener(this::onButonEliminarPartidaClicked);
 
-        txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
+        txtFolio.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyTyped(java.awt.event.KeyEvent evt) {
+            public void keyPressed(KeyEvent evt) {
+                txtFolioKeyPressed(evt);
+            }
+        });
+
+        txtNombre.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent evt) {
                 txtNombreKeyTyped(evt);
             }
         });
-        txtCantidad.addKeyListener(new java.awt.event.KeyAdapter() {
+
+        txtCantidad.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyTyped(java.awt.event.KeyEvent evt) {
+            public void keyTyped(KeyEvent evt) {
                 txtCantidadKeyTyped(evt);
             }
         });
-        txtPrecio.addKeyListener(new java.awt.event.KeyAdapter() {
+
+        txtPrecio.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyTyped(java.awt.event.KeyEvent evt) {
+            public void keyTyped(KeyEvent evt) {
                 txtPrecioKeyTyped(evt);
             }
         });
+
     }
 
     //*****************************BOTONES*****************************
-    private void onButonConsultarClicked(ActionEvent evt) {
-        limpiarLblFactura();
-        limpiarTabla();
-        String folio = getFolio();
+    private void txtFolioKeyPressed(KeyEvent evt) {
+        if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
+            limpiarLblFactura();
+            limpiarTabla();
+            String folio = getFolio();
 
-        if (validarTxtFolio()) {
-            try {
-                Integer id = getIdFactura(getFacturas(), folio);
+            if (validarTxtFolio()) {
+                try {
+                    Integer id = getIdFactura(getFacturas(), folio);
 
-                if (id != null) {
-                    parsearJson(getFactura(id));
-                } else {
-                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                    if (id != null) {
+                        parsearJson(getFactura(id));
+                    } else {
+                        JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                    }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexion.");
                 }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexion.");
             }
-        }
 
-        limpiarTxtsFactura();
+            limpiarTxtsFactura();
+        }
     }
 
     private void onButonCrearFacturaClicked(ActionEvent evt) {
@@ -770,7 +783,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         totalIva = Math.round((totalNeto + totalNeto * .16) * 100) / 100d;
 
         lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
-        lblTotalIva.setText(String.valueOf(Math.round(totalIva * 100) /100d));
+        lblTotalIva.setText(String.valueOf(Math.round(totalIva * 100) / 100d));
     }
 
     //*****************************MODELO*****************************
@@ -905,21 +918,21 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
 //*****************************TEXTO*****************************
-    private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
+    private void txtNombreKeyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
             evt.consume();
         }
     }
 
-    private void txtCantidadKeyTyped(java.awt.event.KeyEvent evt) {
+    private void txtCantidadKeyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
         if (c < '0' || c > '9') {
             evt.consume();
         }
     }
 
-    private void txtPrecioKeyTyped(java.awt.event.KeyEvent evt) {
+    private void txtPrecioKeyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
         if ((c < '0' || c > '9') && (c != '.')) {
             evt.consume();
@@ -960,7 +973,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         txtFolio = new javax.swing.JTextField();
-        btnConsultar = new javax.swing.JButton();
         btnCrearFactura = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         txtCodigo = new javax.swing.JTextField();
@@ -1011,19 +1023,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         jPanel4.add(txtFolio, gridBagConstraints);
 
-        btnConsultar.setText("Consultar");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 150, 0, 150);
-        jPanel4.add(btnConsultar, gridBagConstraints);
-
         btnCrearFactura.setText("Crear factura");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 150, 0, 150);
@@ -1042,10 +1045,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         jPanel4.add(txtCodigo, gridBagConstraints);
 
-        btnEliminarFactura.setText("Elmiminar Factura");
+        btnEliminarFactura.setText("Eliminar Factura");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_END;
         gridBagConstraints.insets = new java.awt.Insets(0, 150, 0, 150);
@@ -1230,7 +1233,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAgregarPartida;
-    private javax.swing.JButton btnConsultar;
     private javax.swing.JButton btnCrearFactura;
     private javax.swing.JButton btnEliminarFactura;
     private javax.swing.JButton btnEliminarPartida;
