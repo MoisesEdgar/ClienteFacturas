@@ -82,15 +82,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                     if (id != null) {
                         parsearJson(getFactura(id));
-                    } else {
-                        JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                        limpiarTxtsFactura();
                     }
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(this, "No se pudo consultar la factura. Verifique su conexion.");
                 }
             }
-
-            limpiarTxtsFactura();
         }
         
     }
@@ -128,16 +125,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                                 parsearJson(getFactura(idFactura));
 
                             } else {
-                                int eleccion = JOptionPane.showConfirmDialog(null, "No existe un cliente con ese codigo ¿Desea agregar un nuevo cliente?", "Confirmation", JOptionPane.YES_NO_CANCEL_OPTION);
-
-                                if (eleccion == JOptionPane.YES_OPTION) {
+                                    JOptionPane.showConfirmDialog(null, "No existe un cliente con ese codigo");
                                     Cliente cliente = new Cliente();
                                     cliente.setVisible(true);
-
-                                } else if (eleccion == JOptionPane.NO_OPTION) {
                                     limpiarTxtsFactura();
                                     limpiarTxtsPartida();
-                                }
+                             
 
                             }
                         }
