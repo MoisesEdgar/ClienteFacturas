@@ -106,7 +106,7 @@ public class Cliente extends javax.swing.JFrame {
         return false;
     }
 
-    private boolean postCliente( String nombre, String telefono, String direccion) throws Exception {
+    private void postCliente( String nombre, String telefono, String direccion) throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
 
@@ -131,18 +131,11 @@ public class Cliente extends javax.swing.JFrame {
 
         int responseCode = conexion.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
-            Scanner scanner = new Scanner(conexion.getInputStream());
-            StringBuilder respuesta = new StringBuilder();
-            while (scanner.hasNext()) {
-                respuesta.append(scanner.nextLine());
-            }
-            scanner.close();
-
-            System.out.println("Cliente agregado corectamente: " + respuesta.toString());
-            return true;
+            System.out.println("Cliente agregado corectamente");
+           
         } else {
-            System.out.println("Error al crear cliente. Código de respuesta: " + responseCode);
-            return false;
+            System.out.println("Error al crear cliente");
+           
         }
     }
 
@@ -167,17 +160,10 @@ public class Cliente extends javax.swing.JFrame {
         int responseCode = conexion.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
 
-            Scanner scanner = new Scanner(conexion.getInputStream());
-            StringBuilder respuesta = new StringBuilder();
-            while (scanner.hasNext()) {
-                respuesta.append(scanner.nextLine());
-            }
-            scanner.close();
-
-            System.out.println("Cliente actualizada exitosamente: " + respuesta.toString());
+            System.out.println("Cliente actualizada exitosamente");
 
         } else {
-            System.out.println("Error al actualizar cliente. Código de respuesta: " + responseCode);
+            System.out.println("Error al actualizar cliente");
 
         }
         
