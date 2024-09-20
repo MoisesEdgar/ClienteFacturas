@@ -40,8 +40,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         txtFolio.addKeyListener(new KeyAdapter() {
             @Override
-            public void keyReleased(KeyEvent evt) {
+            public void keyTyped(KeyEvent evt) {
                 txtFolioKeyPressed(evt);
+                
             }
         });
 
@@ -69,12 +70,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     //*****************************BOTONES*****************************
-    
     private void txtFolioKeyPressed(KeyEvent evt) {
         if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
             limpiarLblFactura();
             limpiarTabla();
-            String folio = getFolio();
+            String folio = txtFolio.getText();
 
             if (validarTxtFolio()) {
                 try {
@@ -86,22 +86,23 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
                     }
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexion.");
+                    JOptionPane.showMessageDialog(this, "No se pudo consultar la factura. Verifique su conexion.");
                 }
             }
 
             limpiarTxtsFactura();
         }
+        
     }
 
     private void onButonCrearFacturaClicked(ActionEvent evt) {
         limpiarLblFactura();
         limpiarTabla();
-        String folio = getFolio();
-        String codigo = getCodigo();
-        String nombre = getNombre();
-        Integer cantidad = getCantidad();
-        Double precio = getPrecio();
+        String folio = txtFolio.getText();
+        String codigo = txtCodigo.getText();
+        String nombre = txtNombre.getText();
+        Integer cantidad = Integer.parseInt(txtCantidad.getText());
+        Double precio = Double.parseDouble(txtPrecio.getText());
 
         try {
             if (validarTxtFolio()) {
@@ -157,7 +158,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onButonEliminarFacturaClicked(ActionEvent evt) {
         limpiarLblFactura();
         limpiarTabla();
-        String folio = getFolio();
+
+        String folio = txtFolio.getText();
 
         if (validarTxtFolio()) {
             try {
@@ -182,10 +184,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
 
         if (validarTxtPartida()) {
-            String nombre = getNombre();
-            Integer cantidad = getCantidad();
-            Double precio = getPrecio();
 
+            String codigo = txtCodigo.getText();
+            String nombre = txtNombre.getText();
+            Integer cantidad = Integer.parseInt(txtCantidad.getText());
+            Double precio = Double.parseDouble(txtPrecio.getText());
             try {
 
                 if (lblFolio.getText().isEmpty()) {
@@ -661,47 +664,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         modeloFacturas.fireTableDataChanged();
     }
 
-    //*****************************VARIABLES*****************************
-    private String getFolio() {
-        if (txtFolio.getText().isEmpty()) {
-            return "";
-        } else {
-            return txtFolio.getText();
-        }
-    }
-
-    private String getCodigo() {
-        if (txtCodigo.getText().isEmpty()) {
-            return "";
-        } else {
-            return txtCodigo.getText();
-        }
-    }
-
-    private String getNombre() {
-        if (txtNombre.getText().isEmpty()) {
-            return "";
-        } else {
-            return txtNombre.getText();
-        }
-    }
-
-    private Integer getCantidad() {
-        if (txtCantidad.getText().isEmpty()) {
-            return 0;
-        } else {
-            return Integer.parseInt(txtCantidad.getText());
-        }
-    }
-
-    private Double getPrecio() {
-        if (txtPrecio.getText().isEmpty()) {
-            return 0.0;
-        } else {
-            return Double.parseDouble(txtPrecio.getText());
-        }
-    }
-
     //*****************************VALIDACIONES*****************************
     private boolean validarExistenciaPartida(StringBuilder facturas, String nombre) {
         JSONArray jsonArray = new JSONArray(facturas.toString());
@@ -740,12 +702,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             return false;
         }
 
-        if (getCantidad() <= 0) {
+        if (Integer.parseInt(txtCantidad.getText()) <= 0) {
             JOptionPane.showMessageDialog(this, "La cantidad debe ser mayor a 0");
             return false;
         }
 
-        if (getPrecio() < 0.1) {
+        if (Double.parseDouble(txtPrecio.getText()) < 0.1) {
             JOptionPane.showMessageDialog(this, "El precio debe ser mayor o igual a 0.1");
             return false;
         }
@@ -943,7 +905,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void limpiarTxtsFactura() {
         txtFolio.setText("");
         txtCodigo.setText("");
-        txtFolio.requestFocus();
     }
 
     private void limpiarTxtsPartida() {

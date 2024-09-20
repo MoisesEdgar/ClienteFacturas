@@ -31,14 +31,10 @@ public class Cliente extends javax.swing.JFrame {
 
     }
 
-    
-    
-    
-
     private void onButonAgregarClicked(ActionEvent evt) {
-        String nombre = getNombre();
-        String telefono = getTelefono();
-        String direccion = getDireccion();
+        String nombre = txtNombre.getText();
+        String telefono = txtTelefono.getText();
+        String direccion = txtDireccion.getText();
 
         try {
             if (validarTxt()) {
@@ -186,30 +182,6 @@ public class Cliente extends javax.swing.JFrame {
         scanner.close();
 
         return jsonClientes;
-    }
-
-    private String getNombre() {
-        if (txtNombre.getText().isEmpty()) {
-            return "";
-        } else {
-            return txtNombre.getText();
-        }
-    }
-
-    private String getTelefono() {
-        if (txtTelefono.getText().isEmpty()) {
-            return "";
-        } else {
-            return txtTelefono.getText();
-        }
-    }
-
-    private String getDireccion() {
-        if (txtDireccion.getText().isEmpty()) {
-            return "";
-        } else {
-            return txtDireccion.getText();
-        }
     }
 
     private boolean validarTxt() {
