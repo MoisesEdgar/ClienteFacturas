@@ -688,7 +688,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private boolean validarFolio(String folio) {
         try {
-            if (folio.matches("F-\\d\\d\\d")) {
+            if (folio.matches("^F-\\d\\d\\d(-\\d\\d\\d)?")) {
                 
                 
 
@@ -737,7 +737,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private boolean validarCodigo(String codigo) {
         try {
-            if (codigo.matches("C-\\d\\d\\d-\\d\\d\\d")) {
+            if (codigo.matches("^C-\\d\\d\\d(-\\d\\d\\d)?")) {
                 return true;
 
             } else {
