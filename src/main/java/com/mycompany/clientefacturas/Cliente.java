@@ -43,15 +43,10 @@ public class Cliente extends javax.swing.JFrame {
                 if (existenciaCliente(clientes, nombre)) {
                     JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 } else {
-                  
-                    postCliente(nombre, telefono ,direccion);
-                    
-                    Integer id = getIdCliente(nombre);
-                    String codigo = "C" + String.valueOf(id);
-                    putCliente(id,codigo);
-                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
+
+                    postCliente(nombre, telefono, direccion);
                     this.dispose();
-                    
+
                 }
                 limpiarTxt();
             }
@@ -62,32 +57,6 @@ public class Cliente extends javax.swing.JFrame {
 
     }
 
-    private Integer getIdCliente(String nombre) throws Exception {
-        URL url = new URL ("http://localhost:8080/clientes");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("GET");
-        conexion.connect();
-        
-        Scanner scanner = new Scanner(url.openStream());
-        StringBuilder jsonClientes = new StringBuilder();
-        
-        while(scanner.hasNext()){
-            jsonClientes.append (scanner.nextLine());
-        }
-        scanner.close();
-        
-        JSONArray jsonArray = new JSONArray(jsonClientes.toString());
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-            if (nombre.equalsIgnoreCase(jsonObject.getString("nombre"))) {
-                return jsonObject.getInt("id");
-            }
-        }
-        return 0;
-    }
-    
     private boolean existenciaCliente(StringBuilder clientes, String nombre) {
         JSONArray jsonArray = new JSONArray(clientes.toString());
 
@@ -100,7 +69,7 @@ public class Cliente extends javax.swing.JFrame {
         return false;
     }
 
-    private void postCliente( String nombre, String telefono, String direccion) throws Exception {
+    private void postCliente(String nombre, String telefono, String direccion) throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
 
@@ -108,64 +77,78 @@ public class Cliente extends javax.swing.JFrame {
         conexion.setRequestProperty("Content-Type", "application/json; utf-8");
         conexion.setRequestProperty("Accept", "application/json");
         conexion.setDoOutput(true);
-        
-         JSONObject clienteJson = new JSONObject();
-        clienteJson.put("codigo", nombre);
+
+        JSONObject clienteJson = new JSONObject();
+
+        String ultimoCodigo = "";
+        JSONArray jsonArray = new JSONArray(getClientes().toString());
+        String codigo = "C-";
+
+        if (jsonArray.isEmpty()) {
+            codigo = "C-001";
+        } else {
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                ultimoCodigo = jsonObject.getString("codigo");
+            }
+
+            String[] salto = ultimoCodigo.split("-");
+
+            Integer cont = Integer.parseInt(salto[1]);
+
+            for (int i = String.valueOf(cont).length(); i < 3;) {
+                i++;
+                codigo = codigo + "0";
+            }
+
+            codigo = codigo + (Integer.parseInt(salto[1]) + 1);
+
+        }
+
+        clienteJson.put("codigo", codigo);
         clienteJson.put("nombre", nombre);
         clienteJson.put("telefono", telefono);
         clienteJson.put("direccion", direccion);
 
-        
- 
         try (OutputStream os = conexion.getOutputStream()) {
             byte[] input = clienteJson.toString().getBytes("utf-8");
             os.write(input, 0, input.length);
         }
-
 
         int responseCode = conexion.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
             System.out.println("Cliente agregado corectamente");
-           
+         
+            
+            codigo = getCodigo(getClientes(), codigo);
+            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
+
         } else {
             System.out.println("Error al crear cliente");
-           
+
         }
+
     }
 
-    private boolean putCliente(Integer id, String codigo) throws Exception {
-        URL url = new URL("http://localhost:8080/clientes/" + id);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("PUT");
+    private String getCodigo(StringBuilder clientes, String codigo) {
 
-        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-        conexion.setRequestProperty("Accept", "application/json");
-        conexion.setDoOutput(true);
-        
-        
-        JSONObject clienteJson = new JSONObject();
-        clienteJson.put("codigo", codigo);
+        JSONArray jsonArray = new JSONArray(clientes.toString());
 
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = clienteJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-        int responseCode = conexion.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
+            String buscarCodigo = jsonObject.getString("codigo");
+            String[] salto = buscarCodigo.split("-");
+            buscarCodigo = "C-" + salto[1];
 
-            System.out.println("Cliente actualizada exitosamente");
-
-        } else {
-            System.out.println("Error al actualizar cliente");
+            if (buscarCodigo.equalsIgnoreCase(codigo)) {
+                return jsonObject.getString("codigo");
+            }
 
         }
-        
-        
-        
-        return false;
+        return null;
     }
-    
+
     private StringBuilder getClientes() throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -203,13 +186,13 @@ public class Cliente extends javax.swing.JFrame {
 
         return true;
     }
-    
+
     public String generarCodigo(String nombre, String telefono, String direccion) {
         String datos = nombre + telefono + direccion;
-        
+
         return Integer.toHexString(datos.hashCode()).toUpperCase();
     }
- 
+
     private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
         char c = evt.getKeyChar();
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {

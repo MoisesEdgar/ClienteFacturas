@@ -94,6 +94,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 if (validarTxtCodigo()) {
                     if (validarTxtPartida()) {
                         postFactura(folio, idCliente, nombre, cantidad, precio);
+                        folio = getFolio(getFacturas(),folio);
                         JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
                         limpiarTxtsFactura();
                         limpiarTxtsPartida();
@@ -404,6 +405,25 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return jsonClientes;
     }
 
+    private String getFolio(StringBuilder facturas, String folio){
+         JSONArray jsonArray = new JSONArray(facturas.toString());
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+            String buscarFolio = jsonObject.getString("folio");
+            String[] salto = buscarFolio.split("-"); 
+            buscarFolio = "F-" + salto[1];
+            
+            if(buscarFolio.equalsIgnoreCase(folio)){
+                return jsonObject.getString("folio"); 
+            }
+    
+        }
+        return null;
+      
+        
+    }
     private boolean delPartida(Integer id) throws Exception {
         URL url = new URL("http://localhost:8080/partidas/" + id);
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -462,34 +482,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         } else {
             System.out.println("Error al actualizar factura. Código de respuesta: " + responseCode);
-
-        }
-    }
-
-    private void putFolio(Integer idFactura, String folio) throws Exception {
-        URL url = new URL("http://localhost:8080/facturas/" + idFactura);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("PUT");
-
-        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-        conexion.setRequestProperty("Accept", "application/json");
-        conexion.setDoOutput(true);
-
-        JSONObject facturaJson = new JSONObject();
-        facturaJson.put("folio", folio);
-
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = facturaJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
-
-        int responseCode = conexion.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-
-            System.out.println("Folio de la factura actualizada exitosamente");
-
-        } else {
-            System.out.println("Error al actualizar el folio de la factura. Código de respuesta: " + responseCode);
 
         }
     }
@@ -695,47 +687,76 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private boolean validarFolio(String folio) {
+        try {
+            if (folio.matches("F-\\d\\d\\d")) {
+                
+                
 
-        if (folio.matches("F-\\d\\d\\d-")) {
-            try {
                 String ultimoFolio = "";
                 JSONArray jsonArray = new JSONArray(getFacturas().toString());
-                if(jsonArray == null){
-                   JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser: " + 001);
-                }else{
-          for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    ultimoFolio = jsonObject.getString("folio");
-                }
-                
-                Integer ultimoNumeracion = getNumeracionFolio(ultimoFolio);
-                Integer nuevoNumero = getNumeracionFolio(folio);
 
-                if(nuevoNumero != ultimoNumeracion+1){
-                    JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser: " + (ultimoNumeracion + 1));
-                }   
+                if (jsonArray.isEmpty()) {
+                    if(folio.equalsIgnoreCase("F-001")){
+                        return true;
+                    }else{
+                        JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser: F-001 ");
+                        return false;
+                    }
+                    
+                    
+                    
+                } else {
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        ultimoFolio = jsonObject.getString("folio");
+                    }
+
+                    Integer ultimoNumeracion = getNumeracionFolio(ultimoFolio);
+                    Integer nuevoNumero = getNumeracionFolio(folio);
+
+                    if (nuevoNumero != ultimoNumeracion + 1) {
+                        JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser: " + (ultimoNumeracion + 1));
+                        return false;
+                    }
+
+                    return true;
+
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "El formato del folio no es valido. Bebe seguir el formato de F-000");
+                txtFolio.setText("");
+                return false;
             }
 
-                
-           
-
-                return true;
-            } catch (Exception e) {
- JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
-            } 
-        } else {
-            JOptionPane.showMessageDialog(this, "El formato del folio no es valido.");
-            txtFolio.setText("");
-            return false;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
         }
+
         return false;
     }
-    
-    private Integer getNumeracionFolio(String folio){
-         String[] salto = folio.split("-");
-                return Integer.parseInt(salto[1]);    
+
+    private boolean validarCodigo(String codigo) {
+        try {
+            if (codigo.matches("C-\\d\\d\\d-\\d\\d\\d")) {
+                return true;
+
+            } else {
+                JOptionPane.showMessageDialog(this, "El formato del codigo no es valido. Bebe seguir el formato de C-000");
+                txtCodigo.setText("");
+                return false;
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
+        }
+
+        return false;
     }
-    
+
+    private Integer getNumeracionFolio(String folio) {
+        String[] salto = folio.split("-");
+        return Integer.parseInt(salto[1]);
+    }
+
     private void calcularTotales() {
         Double totalNeto = 0.0;
         Double totalIva = 0.0;
@@ -908,24 +929,34 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private void txtCodigoKeyPressed(KeyEvent evt) {
+
         if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
 
             if (validarTxtCodigo()) {
                 try {
+
                     if (txtFolio.getText().isEmpty()) {
+                        evt.consume();
+
                         JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-                        txtCodigo.setText("");
                         txtFolio.requestFocus();
 
                     } else {
                         String codigo = txtCodigo.getText();
-                        Integer idCliente = getIdClientes(getClientes(), codigo);
 
-                        if (idCliente == null) {
-                            JOptionPane.showMessageDialog(this, "No existe un cliente con ese codigo");
-                            Cliente cliente = new Cliente();
-                            cliente.setVisible(true);
+                        if (validarCodigo(codigo)) {
+                            Integer idCliente = getIdClientes(getClientes(), codigo);
+
+                            if (idCliente == null) {
+                                JOptionPane.showMessageDialog(this, "No existe un cliente con ese codigo");
+                                Cliente cliente = new Cliente();
+                                cliente.setVisible(true);
+                            }else{
+                                txtNombre.requestFocus();
+                            }
+                            
                         }
+
                     }
 
                 } catch (Exception e) {
@@ -943,9 +974,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             evt.consume();
         }
 
-        if (txtFolio.getText().isEmpty() || txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio y un codigo de cliente");
-            txtNombre.setText("");
+        if (txtFolio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+            evt.consume();
+            txtFolio.requestFocus();
+        }
+
+        if (txtCodigo.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+            evt.consume();
+            txtCodigo.requestFocus();
         }
 
     }
@@ -957,9 +995,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             evt.consume();
         }
 
-        if (txtFolio.getText().isEmpty() || txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio y un codigo de cliente");
-            txtCantidad.setText("");
+        if (txtFolio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+            evt.consume();
+            txtFolio.requestFocus();
+        }
+
+        if (txtCodigo.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+            evt.consume();
+            txtCodigo.requestFocus();
         }
 
     }
@@ -971,9 +1016,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             evt.consume();
         }
 
-        if (txtFolio.getText().isEmpty() || txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio y un codigo de cliente");
-            txtPrecio.setText("");
+        if (txtFolio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+            evt.consume();
+            txtFolio.requestFocus();
+        }
+
+        if (txtCodigo.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+            evt.consume();
+            txtCodigo.requestFocus();
         }
 
     }
