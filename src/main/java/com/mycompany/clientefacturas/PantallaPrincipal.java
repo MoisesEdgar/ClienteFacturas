@@ -112,24 +112,24 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         limpiarTabla();
 
         String folio = txtFolio.getText();
-            if (validarTxtFolio()) {
-                try {
-                    Integer id = getIdFactura(getFacturas(), folio);
+        if (validarTxtFolio()) {
+            try {
+                Integer id = getIdFactura(getFacturas(), folio);
 
-                    if (id != null) {
-                        delFactura(id);
-                        JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
+                if (id != null) {
+                    delFactura(id);
+                    JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
 
-                        limpiarTxtsFactura();
-                    } else {
-                        JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
-                    }
-
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "No se pudo eliminar la factura. Verifique su conexión.");
+                    limpiarTxtsFactura();
+                } else {
+                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
                 }
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "No se pudo eliminar la factura. Verifique su conexión.");
             }
-        
+        }
+
     }
 
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
@@ -237,7 +237,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     Partida partida = modeloFacturas.getPartida(rowIndex);
                     Integer cantidad = partida.cantidad;
 
-                    if (cantidad <= 0) {
+                    if (cantidad == null) {
+                        JOptionPane.showMessageDialog(this, "El campo cantidad no puede estar vacio");
+                    } else if (cantidad <= 0) {
                         JOptionPane.showMessageDialog(this, "La cantidad deve ser mayor a 0");
                     } else {
                         valido = true;
@@ -249,7 +251,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     Partida partida = modeloFacturas.getPartida(rowIndex);
                     Double precio = partida.precio;
 
-                    if (precio < 0.1) {
+                    if (precio == null) {
+                        JOptionPane.showMessageDialog(this, "El campo precio no puede estar vacio");
+                    } else if (precio < 0.1) {
                         JOptionPane.showMessageDialog(this, "El precio deve ser mayora a 0.1");
                     } else {
                         valido = true;
