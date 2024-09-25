@@ -89,12 +89,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         try {
             Integer idCliente = getIdClientes(getClientes(), codigo);
             Integer idFactura = getIdFactura(getFacturas(), folio);
-
             if (validarTxtFolio()) {
                 if (validarTxtCodigo()) {
                     if (validarTxtPartida()) {
                         postFactura(folio, idCliente, nombre, cantidad, precio);
-                        folio = getFolio(getFacturas(),folio);
                         JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
                         limpiarTxtsFactura();
                         limpiarTxtsPartida();
@@ -105,7 +103,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             }
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexion.");
+            JOptionPane.showMessageDialog(this, "No se pudo crear la factura. Verifique su conexion.");
         }
     }
 
@@ -114,25 +112,24 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         limpiarTabla();
 
         String folio = txtFolio.getText();
+            if (validarTxtFolio()) {
+                try {
+                    Integer id = getIdFactura(getFacturas(), folio);
 
-        if (validarTxtFolio()) {
-            try {
-                Integer id = getIdFactura(getFacturas(), folio);
+                    if (id != null) {
+                        delFactura(id);
+                        JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
 
-                if (id != null) {
-                    delFactura(id);
-                    JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
+                        limpiarTxtsFactura();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                    }
 
-                    limpiarTxtsFactura();
-                } else {
-                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "No se pudo eliminar la factura. Verifique su conexión.");
                 }
-
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
             }
-
-        }
+        
     }
 
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
@@ -173,7 +170,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
+                JOptionPane.showMessageDialog(this, "No se pudo agregar la partida. Verifique su conexión.");
             }
 
         }
@@ -195,7 +192,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
 
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
+                JOptionPane.showMessageDialog(this, "No se pudo eliminar la partida. Verifique su conexión.");
             }
 
         } else {
@@ -405,25 +402,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return jsonClientes;
     }
 
-    private String getFolio(StringBuilder facturas, String folio){
-         JSONArray jsonArray = new JSONArray(facturas.toString());
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-            String buscarFolio = jsonObject.getString("folio");
-            String[] salto = buscarFolio.split("-"); 
-            buscarFolio = "F-" + salto[1];
-            
-            if(buscarFolio.equalsIgnoreCase(folio)){
-                return jsonObject.getString("folio"); 
-            }
-    
-        }
-        return null;
-      
-        
-    }
     private boolean delPartida(Integer id) throws Exception {
         URL url = new URL("http://localhost:8080/partidas/" + id);
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -688,23 +666,20 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private boolean validarFolio(String folio) {
         try {
-            if (folio.matches("^F-\\d\\d\\d(-\\d\\d\\d)?")) {
-                
-                
+            if (folio.matches("^F-\\d\\d\\d")) {
 
                 String ultimoFolio = "";
                 JSONArray jsonArray = new JSONArray(getFacturas().toString());
 
                 if (jsonArray.isEmpty()) {
-                    if(folio.equalsIgnoreCase("F-001")){
+                    if (folio.equalsIgnoreCase("F-001")) {
                         return true;
-                    }else{
-                        JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser: F-001 ");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser: F-001");
+                        txtFolio.setText("F-001");
                         return false;
                     }
-                    
-                    
-                    
+
                 } else {
                     for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -715,15 +690,23 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     Integer nuevoNumero = getNumeracionFolio(folio);
 
                     if (nuevoNumero != ultimoNumeracion + 1) {
-                        JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser: " + (ultimoNumeracion + 1));
+                        String con = String.valueOf(ultimoNumeracion + 1);
+                        String ceros = "";
+
+                        for (int i = con.length(); i < 3;) {
+                            i++;
+                            ceros = ceros + "0";
+                        }
+
+                        JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser F-" + ceros + (ultimoNumeracion + 1));
+                        txtFolio.setText("F-" + ceros + (ultimoNumeracion + 1));
                         return false;
                     }
 
                     return true;
-
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "El formato del folio no es valido. Bebe seguir el formato de F-000");
+                JOptionPane.showMessageDialog(this, "El formato del folio no es valido. Debe seguir el formato de F-000");
                 txtFolio.setText("");
                 return false;
             }
@@ -737,11 +720,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private boolean validarCodigo(String codigo) {
         try {
-            if (codigo.matches("^C-\\d\\d\\d(-\\d\\d\\d)?")) {
+            if (codigo.matches("^C-\\d\\d\\d")) {
                 return true;
 
             } else {
-                JOptionPane.showMessageDialog(this, "El formato del codigo no es valido. Bebe seguir el formato de C-000");
+                JOptionPane.showMessageDialog(this, "El formato del codigo no es valido. Debe seguir el formato de C-000");
                 txtCodigo.setText("");
                 return false;
             }
@@ -930,37 +913,29 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private void txtCodigoKeyPressed(KeyEvent evt) {
 
-        if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
+        if (txtFolio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+            evt.consume();
+            txtFolio.requestFocus();
+        } else if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
 
             if (validarTxtCodigo()) {
                 try {
+                    String codigo = txtCodigo.getText();
 
-                    if (txtFolio.getText().isEmpty()) {
-                        evt.consume();
+                    if (validarCodigo(codigo)) {
+                        Integer idCliente = getIdClientes(getClientes(), codigo);
 
-                        JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-                        txtFolio.requestFocus();
-
-                    } else {
-                        String codigo = txtCodigo.getText();
-
-                        if (validarCodigo(codigo)) {
-                            Integer idCliente = getIdClientes(getClientes(), codigo);
-
-                            if (idCliente == null) {
-                                JOptionPane.showMessageDialog(this, "No existe un cliente con ese codigo");
-                                Cliente cliente = new Cliente();
-                                cliente.setVisible(true);
-                            }else{
-                                txtNombre.requestFocus();
-                            }
-                            
+                        if (idCliente == null) {
+                            JOptionPane.showMessageDialog(this, "No existe un cliente con ese codigo");
+                            Cliente cliente = new Cliente();
+                            cliente.setVisible(true);
+                        } else {
+                            txtNombre.requestFocus();
                         }
-
                     }
-
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "No se pudo consultar la factura. Verifique su conexion.");
+                    JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexion.");
                 }
 
             }
@@ -973,17 +948,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
             evt.consume();
         }
-
-        if (txtFolio.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-            evt.consume();
-            txtFolio.requestFocus();
-        }
-
-        if (txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-            evt.consume();
-            txtCodigo.requestFocus();
+        if (lblFolio.getText().isEmpty()) {
+            if (txtFolio.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+                evt.consume();
+                txtFolio.requestFocus();
+            } else if (txtCodigo.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+                evt.consume();
+                txtCodigo.requestFocus();
+            }
         }
 
     }
@@ -994,19 +968,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if (c < '0' || c > '9') {
             evt.consume();
         }
-
-        if (txtFolio.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-            evt.consume();
-            txtFolio.requestFocus();
+        if (lblFolio.getText().isEmpty()) {
+            if (txtFolio.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+                evt.consume();
+                txtFolio.requestFocus();
+            } else if (txtCodigo.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+                evt.consume();
+                txtCodigo.requestFocus();
+            }
         }
-
-        if (txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-            evt.consume();
-            txtCodigo.requestFocus();
-        }
-
     }
 
     private void txtPrecioKeyTyped(KeyEvent evt) {
@@ -1015,17 +987,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if ((c < '0' || c > '9') && (c != '.')) {
             evt.consume();
         }
+        if (lblFolio.getText().isEmpty()) {
+            if (txtFolio.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+                evt.consume();
+                txtFolio.requestFocus();
+            } else if (txtCodigo.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+                evt.consume();
+                txtCodigo.requestFocus();
+            }
 
-        if (txtFolio.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-            evt.consume();
-            txtFolio.requestFocus();
-        }
-
-        if (txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-            evt.consume();
-            txtCodigo.requestFocus();
         }
 
     }
@@ -1109,7 +1081,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 4;
-        gridBagConstraints.ipadx = 100;
+        gridBagConstraints.ipadx = 80;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         jPanel4.add(txtFolio, gridBagConstraints);
 
@@ -1131,8 +1103,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 6;
-        gridBagConstraints.ipadx = 46;
+        gridBagConstraints.ipadx = 80;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 1, 0, 1);
         jPanel4.add(txtCodigo, gridBagConstraints);
 
         btnEliminarFactura.setText("Eliminar Factura");

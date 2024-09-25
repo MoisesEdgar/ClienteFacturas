@@ -39,11 +39,9 @@ public class Cliente extends javax.swing.JFrame {
         try {
             if (validarTxt()) {
                 StringBuilder clientes = getClientes();
-
                 if (existenciaCliente(clientes, nombre)) {
                     JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 } else {
-
                     postCliente(nombre, telefono, direccion);
                     this.dispose();
 
@@ -57,18 +55,7 @@ public class Cliente extends javax.swing.JFrame {
 
     }
 
-    private boolean existenciaCliente(StringBuilder clientes, String nombre) {
-        JSONArray jsonArray = new JSONArray(clientes.toString());
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-            if (nombre.equalsIgnoreCase(jsonObject.getString("nombre"))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
+  
     private void postCliente(String nombre, String telefono, String direccion) throws Exception {
         URL url = new URL("http://localhost:8080/clientes");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -95,14 +82,14 @@ public class Cliente extends javax.swing.JFrame {
             String[] salto = ultimoCodigo.split("-");
 
             Integer cont = Integer.parseInt(salto[1]);
-
+            String ceros = "";
+            
             for (int i = String.valueOf(cont).length(); i < 3;) {
                 i++;
-                codigo = codigo + "0";
+                 ceros = ceros + "0";
             }
 
-            codigo = codigo + (Integer.parseInt(salto[1]) + 1);
-
+            codigo = "C-" + ceros + (Integer.parseInt(salto[1]) + 1);    
         }
 
         clienteJson.put("codigo", codigo);
@@ -166,6 +153,40 @@ public class Cliente extends javax.swing.JFrame {
 
         return jsonClientes;
     }
+    
+    private boolean existenciaCliente(StringBuilder clientes, String nombre) {
+        JSONArray jsonArray = new JSONArray(clientes.toString());
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            if (nombre.equalsIgnoreCase(jsonObject.getString("nombre"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public String generarCodigo(String nombre, String telefono, String direccion) {
+        String datos = nombre + telefono + direccion;
+
+        return Integer.toHexString(datos.hashCode()).toUpperCase();
+    }
+
+    
+    
+    private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {
+            evt.consume();
+        }
+    }
+
+    private void txtTelefonoKeyTyped(java.awt.event.KeyEvent evt) {
+        char c = evt.getKeyChar();
+        if (c < '0' || c > '9') {
+            evt.consume();
+        }
+    }
 
     private boolean validarTxt() {
 
@@ -186,27 +207,7 @@ public class Cliente extends javax.swing.JFrame {
 
         return true;
     }
-
-    public String generarCodigo(String nombre, String telefono, String direccion) {
-        String datos = nombre + telefono + direccion;
-
-        return Integer.toHexString(datos.hashCode()).toUpperCase();
-    }
-
-    private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
-        char c = evt.getKeyChar();
-        if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {
-            evt.consume();
-        }
-    }
-
-    private void txtTelefonoKeyTyped(java.awt.event.KeyEvent evt) {
-        char c = evt.getKeyChar();
-        if (c < '0' || c > '9') {
-            evt.consume();
-        }
-    }
-
+     
     private void limpiarTxt() {
         txtNombre.setText("");
         txtTelefono.setText("");
