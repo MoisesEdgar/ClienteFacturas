@@ -200,6 +200,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
+    
+    //CALCULA TOTALES
     private void onModeloFacturasModificado(TableModelEvent evt) {
         int rowIndex = evt.getFirstRow();
         int colIndex = evt.getColumn();
@@ -285,18 +287,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             //case TableModelEvent.DELETE:
         }
         calcularTotales();
-
-        try {
-            String folio = lblFolio.getText();
-            if (folio != "") {
-                Integer id = getIdFactura(getFacturas(), folio);
-                putTotales(id, Double.parseDouble(lblSubtotal.getText()), Double.parseDouble(lblTotalIva.getText()));
-            }
-
-        } catch (Exception e) {
-
-        }
-
     }
 
     //*****************************API*****************************
@@ -464,34 +454,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         } else {
             System.out.println("Error al actualizar factura. Código de respuesta: " + responseCode);
-
-        }
-    }
-
-    private void putTotales(Integer idFactura, Double subtotal, Double total) throws Exception {
-        URL url = new URL("http://localhost:8080/facturas/" + idFactura);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("PUT");
-
-        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-        conexion.setRequestProperty("Accept", "application/json");
-        conexion.setDoOutput(true);
-
-        JSONObject facturaJson = new JSONObject();
-        facturaJson.put("subtotal", subtotal);
-        facturaJson.put("total", total);
-
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = facturaJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
-
-        int responseCode = conexion.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            System.out.println("Folio de la factura actualizada exitosamente");
-
-        } else {
-            System.out.println("Error al actualizar el folio de la factura. Código de respuesta: " + responseCode);
 
         }
     }
@@ -1134,7 +1096,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.insets = new java.awt.Insets(2, 0, 3, 0);
         jPanel5.add(jLabel4, gridBagConstraints);
 
-        jLabel5.setText("Total con IVA");
+        jLabel5.setText("Total con IVA:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
