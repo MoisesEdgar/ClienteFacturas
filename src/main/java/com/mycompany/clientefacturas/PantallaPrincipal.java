@@ -82,23 +82,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         limpiarTabla();
         String folio = txtFolio.getText();
         String codigo = txtCodigo.getText();
-        String nombre = txtNombre.getText();
-        Integer cantidad = Integer.parseInt(txtCantidad.getText());
-        Double precio = Double.parseDouble(txtPrecio.getText());
 
         try {
             Integer idCliente = getIdClientes(getClientes(), codigo);
-            Integer idFactura = getIdFactura(getFacturas(), folio);
             if (validarTxtFolio()) {
                 if (validarTxtCodigo()) {
-                    if (validarTxtPartida()) {
-                        postFactura(folio, idCliente, nombre, cantidad, precio);
-                        JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
-                        limpiarTxtsFactura();
-                        limpiarTxtsPartida();
-                        idFactura = getIdFactura(getFacturas(), folio);
-                        parsearJson(getFactura(idFactura));
-                    }
+
+                    postFactura(folio, idCliente, getPartidas());
+                    JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
+                    limpiarTxtsFactura();
+                    limpiarTxtsPartida();
+
+                    Integer idFactura = getIdFactura(getFacturas(), folio);
+                    parsearJson(getFactura(idFactura));
                 }
             }
 
@@ -136,43 +132,46 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         if (validarTxtPartida()) {
 
-            String codigo = txtCodigo.getText();
             String nombre = txtNombre.getText();
             Integer cantidad = Integer.parseInt(txtCantidad.getText());
             Double precio = Double.parseDouble(txtPrecio.getText());
-            try {
 
-                if (lblFolio.getText().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Debe consultar o crear una factura para poder agregar partidas");
-                } else {
-                    String folio = lblFolio.getText();
-                    StringBuilder facturas = getFacturas();
-                    Integer idFactura = getIdFactura(facturas, folio);
-                    Integer idPartida = getIdPartida(getFactura(idFactura), nombre);
+            Partida partida = new Partida();
+            partida.nombreArticulo = nombre;
+            partida.cantidad = cantidad;
+            partida.precio = precio;
 
-                    if (idPartida == null) {
+            modeloFacturas.agregar(partida);
 
-                        Partida partida = new Partida();
-                        partida.nombreArticulo = nombre;
-                        partida.cantidad = cantidad;
-                        partida.precio = precio;
+            limpiarTxtsPartida();
 
-                        modeloFacturas.agregar(partida);
-
-                        postPartida(nombre, cantidad, precio, idFactura);
-
-                        limpiarTxtsPartida();
-
-                    } else {
-                        JOptionPane.showMessageDialog(this, "El articulo ya esta ingresado");
-                    }
-
-                }
-
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "No se pudo agregar la partida. Verifique su conexión.");
-            }
-
+//            try {
+//                
+//                    String folio = lblFolio.getText();
+//                   StringBuilder facturas = getFacturas();
+//                   Integer idFactura = getIdFactura(facturas, folio);
+//                   Integer idPartida = getIdPartida(getFactura(idFactura), nombre);
+//
+//                    if (idPartida == null) {
+//
+//                        Partida partida = new Partida();
+//                        partida.nombreArticulo = nombre;
+//                        partida.cantidad = cantidad;
+//                        partida.precio = precio;
+//
+//                        modeloFacturas.agregar(partida);
+//
+//                         postPartida(nombre, cantidad, precio, idFactura);
+//
+//                        limpiarTxtsPartida();
+//
+//                    } else {
+//                        JOptionPane.showMessageDialog(this, "El articulo ya esta ingresado");
+//                    }
+//
+//            } catch (Exception e) {
+//                JOptionPane.showMessageDialog(this, "No se pudo agregar la partida. Verifique su conexión.");
+//            }
         }
 
     }
@@ -200,8 +199,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    
-    //CALCULA TOTALES
     private void onModeloFacturasModificado(TableModelEvent evt) {
         int rowIndex = evt.getFirstRow();
         int colIndex = evt.getColumn();
@@ -287,6 +284,23 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             //case TableModelEvent.DELETE:
         }
         calcularTotales();
+    }
+
+    private List<Partida> getPartidas() {
+
+        List<Partida> partidas = new ArrayList<>();
+        Partida partida = new Partida();
+
+        for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
+
+            partida.nombreArticulo = (String) modeloFacturas.getValueAt(i, 0);
+            partida.cantidad = (Integer) modeloFacturas.getValueAt(i, 1);
+            partida.precio = (Double) modeloFacturas.getValueAt(i, 2);
+
+            partidas.add(partida);
+        }
+
+        return partidas;
     }
 
     //*****************************API*****************************
@@ -458,7 +472,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private void postFactura(String folio, Integer codigo, String nombre, Integer cantidad, Double precio) throws Exception {
+    private void postFactura(String folio, Integer codigo, List partidas) throws Exception {
         URL url = new URL("http://localhost:8080/facturas");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
 
@@ -474,10 +488,21 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         JSONArray partidasJson = new JSONArray();
         JSONObject partidaJson = new JSONObject();
 
-        partidaJson.put("nombre_articulo", nombre);
-        partidaJson.put("cantidad", cantidad);
-        partidaJson.put("precio", precio);
-        partidasJson.put(partidaJson);
+        for (int i = 0; i < partidas.size(); i++) {
+
+            Partida partida = (Partida) partidas.get(i);
+
+            String nombre = (String) partida.nombreArticulo;
+            Integer cantidad = (Integer) partida.cantidad;
+            Double precio = (Double) partida.precio;
+
+            partidaJson.put("nombre_articulo", nombre);
+            partidaJson.put("cantidad", cantidad);
+            partidaJson.put("precio", precio);
+
+            partidasJson.put(partidaJson);
+        }
+        
 
         facturaJson.put("partidas", partidasJson);
 
@@ -485,7 +510,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             byte[] input = facturaJson.toString().getBytes("utf-8");
             os.write(input, 0, input.length);
         }
-
+        
         int responseCode = conexion.getResponseCode();
 
         if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -493,7 +518,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         } else {
             System.out.println("Error al crear factura. Código de respuesta: " + responseCode);
-
         }
     }
 
