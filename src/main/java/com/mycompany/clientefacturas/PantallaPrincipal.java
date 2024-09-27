@@ -32,11 +32,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         tblFactura.getColumnModel().getColumn(2).setCellRenderer(new DecimalesRenderer());
         tblFactura.getColumnModel().getColumn(3).setCellRenderer(new DecimalesRenderer());
 
-        btnCrearFactura.addActionListener(this::onButonCrearFacturaClicked);
+        btnGuardarFactura.addActionListener(this::onButonGuardarFacturaClicked);
         btnEliminarFactura.addActionListener(this::onButonEliminarFacturaClicked);
 
         btnAgregarPartida.addActionListener(this::onButonAgregarPartidaClicked);
         btnEliminarPartida.addActionListener(this::onButonEliminarPartidaClicked);
+
+        btnLimpiar.addActionListener(this::onButonLimpiarClicked);
 
         txtFolio.addKeyListener(new KeyAdapter() {
             @Override
@@ -77,7 +79,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     //*****************************BOTONES*****************************
-    private void onButonCrearFacturaClicked(ActionEvent evt) {
+    private void onButonGuardarFacturaClicked(ActionEvent evt) {
         limpiarLblFactura();
         String folio = txtFolio.getText();
         String codigo = txtCodigo.getText();
@@ -85,20 +87,26 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         try {
             if (validarTxtFolio()) {
                 if (validarTxtCodigo()) {
-                    Integer idCliente = getIdClientes(getClientes(), codigo);
-                    postFactura(folio, idCliente, getPartidas()); 
-                    limpiarTabla();
-                    limpiarTxtsPartida();
-                    limpiarTxtsFactura();
-                    
-                    JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
+                    getIdFactura(getFacturas(), folio);
+
+                    if (getIdFactura(getFacturas(), folio) == null) {
+                        Integer idCliente = getIdClientes(getClientes(), codigo);
+                        postFactura(folio, idCliente, getPartidas());
+                        limpiarTabla();
+                        limpiarTxtsPartida();
+                        limpiarTxtsFactura();
+
+                        JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
+                    } else {
+                    }
+
                 }
             } else {
                 limpiarTabla();
             }
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "No se pudo crear la factura. Verifique su conexion.");
+            JOptionPane.showMessageDialog(this, "No se pudo guardar la factura. Verifique su conexion.");
         }
     }
 
@@ -139,38 +147,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             partida.cantidad = cantidad;
             partida.precio = precio;
 
-            if (lblFolio.getText().isEmpty()) {
-                if (validarProducto(nombre)) {
-                    modeloFacturas.agregar(partida);
-                    limpiarTxtsPartida();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Ese articulo ya esta registrado");
-                    limpiarTxtsPartida();
-                }
-
+            if (validarProducto(nombre)) {
+                modeloFacturas.agregar(partida);
+                limpiarTxtsPartida();
             } else {
-                try {
-
-                    String folio = lblFolio.getText();
-                    Integer idFactura = getIdFactura(getFacturas(), folio);
-                    Integer idPartida = getIdPartida(getFactura(idFactura), nombre);
-
-                    if (idPartida == null) {
-                        modeloFacturas.agregar(partida);
-                        postPartida(nombre, cantidad, precio, idFactura);
-                        limpiarTxtsPartida();
-                        limpiarTabla();
-                        llenarTabla(getFactura(idFactura));
-
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Ese articulo ya esta registrado");
-                        limpiarTxtsPartida();
-                    }
-
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "No se pudo agregar la partida. Verifique su conexión.");
-                }
-            }
+                JOptionPane.showMessageDialog(this, "Ese articulo ya esta registrado");
+                limpiarTxtsPartida();
+            } 
         }
 
     }
@@ -199,6 +182,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
         }
 
+    }
+
+    private void onButonLimpiarClicked(ActionEvent evt) {
+        limpiarTxtsPartida();
+        limpiarTxtsFactura();
+        limpiarLblFactura();
+        limpiarTabla();
+        txtFolio.requestFocus();
     }
 
     private void onModeloFacturasModificado(TableModelEvent evt) {
@@ -245,7 +236,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else {
                         valido = true;
                     }
-
                 }
 
                 if (colIndex == 2) {
@@ -561,6 +551,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         lblFolio.setText(jsonObjectFacturas.getString("folio"));
         lblFecha.setText(jsonObjectFacturas.getString("fecha_expedicion"));
+
+        try {
+            String codigo = getCodigo(getClientes(), jsonObjectFacturas.getInt("cliente_id"));
+            txtCodigo.setText(codigo);
+        } catch (Exception e) {
+
+        }
+
         JSONArray jsonPartidas = jsonObjectFacturas.getJSONArray("partidas");
 
         for (int j = 0; j < jsonPartidas.length(); j++) {
@@ -575,6 +573,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
 
         modeloFacturas.fireTableDataChanged();
+    }
+
+    private String getCodigo(StringBuilder clientes, Integer id) {
+        JSONArray jsonArray = new JSONArray(clientes.toString());
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+            if (id == jsonObject.getInt("id")) {
+                return jsonObject.getString("codigo");
+            }
+        }
+        return null;
     }
 
     //*****************************VALIDACIONES*****************************
@@ -897,7 +908,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     Integer id = getIdFactura(getFacturas(), folio);
                     if (id != null) {
                         llenarTabla(getFactura(id));
-                        limpiarTxtsFactura();
                     } else {
                         if (validarFolio(folio)) {
                             txtCodigo.requestFocus();
@@ -1036,7 +1046,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         txtFolio = new javax.swing.JTextField();
-        btnCrearFactura = new javax.swing.JButton();
+        btnGuardarFactura = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         txtCodigo = new javax.swing.JTextField();
         btnEliminarFactura = new javax.swing.JButton();
@@ -1062,6 +1072,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         lblFolio = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         lblFecha = new javax.swing.JLabel();
+        btnLimpiar = new javax.swing.JButton();
 
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
@@ -1086,14 +1097,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         jPanel4.add(txtFolio, gridBagConstraints);
 
-        btnCrearFactura.setText("Crear factura");
+        btnGuardarFactura.setText("Guardar Factura");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 4;
         gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 150, 0, 150);
-        jPanel4.add(btnCrearFactura, gridBagConstraints);
+        jPanel4.add(btnGuardarFactura, gridBagConstraints);
 
         jLabel2.setText("Codigo del cliente:");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1257,12 +1268,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 10);
         jPanel6.add(jLabel3, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 450);
         jPanel6.add(lblFolio, gridBagConstraints);
 
         jLabel10.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
@@ -1271,13 +1282,21 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 10);
         jPanel6.add(jLabel10, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 6;
+        gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 450);
         jPanel6.add(lblFecha, gridBagConstraints);
+
+        btnLimpiar.setText("Limpiar");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 7;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.ipadx = 31;
+        gridBagConstraints.insets = new java.awt.Insets(9, 200, 0, 10);
+        jPanel6.add(btnLimpiar, gridBagConstraints);
 
         jPanel2.add(jPanel6, java.awt.BorderLayout.PAGE_END);
 
@@ -1297,9 +1316,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAgregarPartida;
-    private javax.swing.JButton btnCrearFactura;
     private javax.swing.JButton btnEliminarFactura;
     private javax.swing.JButton btnEliminarPartida;
+    private javax.swing.JButton btnGuardarFactura;
+    private javax.swing.JButton btnLimpiar;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
