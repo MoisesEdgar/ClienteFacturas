@@ -86,14 +86,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             if (validarTxtFolio()) {
                 if (validarTxtCodigo()) {
                     Integer idCliente = getIdClientes(getClientes(), codigo);
-                    postFactura(folio, idCliente, getPartidas());
-
+                    postFactura(folio, idCliente, getPartidas()); 
                     limpiarTabla();
-                    limpiarTxtsFactura();
                     limpiarTxtsPartida();
-
-                    Integer idFactura = getIdFactura(getFacturas(), folio);
-                    llenarTabla(getFactura(idFactura));
+                    limpiarTxtsFactura();
+                    
+                    JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
                 }
             } else {
                 limpiarTabla();
@@ -107,7 +105,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onButonEliminarFacturaClicked(ActionEvent evt) {
         String folio = lblFolio.getText();
         if (folio.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Debe consultar una factura para eliminar");
+            JOptionPane.showMessageDialog(this, "Especifique la factura a eliminar");
         } else {
             try {
                 Integer id = getIdFactura(getFacturas(), folio);
