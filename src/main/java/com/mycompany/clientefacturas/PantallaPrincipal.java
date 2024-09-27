@@ -144,7 +144,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     modeloFacturas.agregar(partida);
                     limpiarTxtsPartida();
                 } else {
-                    JOptionPane.showMessageDialog(this, "El articulo ya esta ingresado");
+                    JOptionPane.showMessageDialog(this, "Ese articulo ya esta registrado");
+                    limpiarTxtsPartida();
                 }
 
             } else {
@@ -162,7 +163,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         llenarTabla(getFactura(idFactura));
 
                     } else {
-                        JOptionPane.showMessageDialog(this, "El articulo ya esta ingresado");
+                        JOptionPane.showMessageDialog(this, "Ese articulo ya esta registrado");
                         limpiarTxtsPartida();
                     }
 
