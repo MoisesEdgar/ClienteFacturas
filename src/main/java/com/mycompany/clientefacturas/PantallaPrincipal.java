@@ -75,9 +75,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 txtPrecioKeyTyped(evt);
             }
         });
-
     }
-
+    
     //*****************************BOTONES*****************************
     private void onButonGuardarFacturaClicked(ActionEvent evt) {
         limpiarLblFactura();
@@ -96,6 +95,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             limpiarTabla();
                             limpiarTxtsPartida();
                             limpiarTxtsFactura();
+                            txtFolio.requestFocus();
                             JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
 
                         } else {
@@ -169,16 +169,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private void onButonEliminarPartidaClicked(ActionEvent evt) {
-
+        
         int index = tblFactura.getSelectedRow();
         if (index > -1) {
 
             Partida partida = modeloFacturas.getPartida(index);
             String nombre = partida.nombreArticulo;
-            if (lblFolio.getText().isEmpty()) {
                 modeloFacturas.eliminar(index);
                 JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
-            }
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
         }
@@ -428,21 +426,27 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         JSONArray partidasJson = new JSONArray();
 
-        
-        
-        
 
         for (int i = 0; i < partidas.size(); i++) {
             JSONObject partidaJson = new JSONObject();
             Partida partida = (Partida) partidas.get(i);
+            Integer id = 0;
             
+            try{
+                id = getIdPartida(getFactura(idFactura),partida.nombreArticulo);
+                
+            }catch(Exception e){
+                JOptionPane.showMessageDialog(this,"Error al conectarse con el servidor. verifique seu conecxion");
+            }
+
+            partidaJson.put("id", id);
             partidaJson.put("nombre_articulo", (String) partida.nombreArticulo);
             partidaJson.put("cantidad", (Integer) partida.cantidad);
             partidaJson.put("precio", (Double) partida.precio);
 
             partidasJson.put(partidaJson);
         }
-
+        
         facturaJson.put("partidas", partidasJson);
 
         try (OutputStream os = conexion.getOutputStream()) {
@@ -521,6 +525,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
         return null;
     }
+     
     //*****************************VALIDACIONES*****************************
     private boolean validarProducto(String producto) {
         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
@@ -947,6 +952,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void limpiarTabla() {
         modeloFacturas.partidas.clear();
         modeloFacturas.fireTableDataChanged();
+        txtFolio.requestFocus();
     }
 
     @SuppressWarnings("unchecked")
