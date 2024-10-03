@@ -110,6 +110,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         limpiarTabla();
                         limpiarTxtsPartida();
                         limpiarTxtsFactura();
+                          txtFolio.requestFocus();
                         JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + folio);
                     }
 
@@ -121,47 +122,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "No se pudo guardar la factura. Verifique su conexion.");
         }
-    }
-
-    private void limpiarPartidas() {
-        try {
-
-            String folio = txtFolio.getText();
-            Integer idFactura = getIdFactura(getFacturas(), folio);
-            StringBuilder factura = getFactura(idFactura);
-
-            JSONArray partidasCreadas = getPartidasCreadas(factura);
-            List<Partida> partidasNuevas = getPartidas();
-
-            for (int i = 0; i < partidasCreadas.length(); i++) {
-                boolean des = false;
-                JSONObject partidaid = partidasCreadas.getJSONObject(i);
-
-                for (int j = 0; j < partidasNuevas.size(); j++) {
-                    Partida partida = (Partida) partidasNuevas.get(j);
-
-                    Integer idPartida = getIdPartida(getFactura(idFactura), partida.nombreArticulo);
-
-                    if (idPartida != null) {
-                        if (partidaid.getInt("id") == idPartida) {
-                            des = true;
-                        }
-                    }
-
-                }
-                if (des == false) {
-                    delPartida(partidaid.getInt("id"));
-                }
-
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error al conectarse con el servidor. verifique seu conecxion");
-        }
-    }
-
-    private JSONArray getPartidasCreadas(StringBuilder factura) {
-        JSONObject jsonObject = new JSONObject(factura.toString());
-        return jsonObject.getJSONArray("partidas");
     }
 
     private void onButonEliminarFacturaClicked(ActionEvent evt) {
@@ -230,6 +190,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onModeloFacturasModificado(TableModelEvent evt) {
         int rowIndex = evt.getFirstRow();
         int colIndex = evt.getColumn();
+        if(colIndex != -1){
+            String nombreArticulot = (String) modeloFacturas.getValueAt(rowIndex, 0);
+        }
+       
 
         switch (evt.getType()) {
             case TableModelEvent.UPDATE:
@@ -284,8 +248,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 break;
 
-            //case TableModelEvent.INSERT:
-            //case TableModelEvent.DELETE:
         }
         txtNombre.requestFocus();
         calcularTotales();
@@ -367,7 +329,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         for (int i = 0; i < jsonArray.length(); i++) {
             JSONObject jsonObject = jsonArray.getJSONObject(i);
 
-            if (folio.equalsIgnoreCase(jsonObject.getString("folio"))) {
+            if (folio.equals(jsonObject.getString("folio"))) {
                 return jsonObject.getInt("id");
             }
         }
@@ -735,6 +697,47 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
         lblTotalIva.setText(String.valueOf(Math.round(totalIva * 100) / 100d));
+    }
+    
+     private void limpiarPartidas() {
+        try {
+
+            String folio = txtFolio.getText();
+            Integer idFactura = getIdFactura(getFacturas(), folio);
+            StringBuilder factura = getFactura(idFactura);
+
+            JSONArray partidasCreadas = getPartidasCreadas(factura);
+            List<Partida> partidasNuevas = getPartidas();
+
+            for (int i = 0; i < partidasCreadas.length(); i++) {
+                boolean des = false;
+                JSONObject partidaid = partidasCreadas.getJSONObject(i);
+
+                for (int j = 0; j < partidasNuevas.size(); j++) {
+                    Partida partida = (Partida) partidasNuevas.get(j);
+
+                    Integer idPartida = getIdPartida(getFactura(idFactura), partida.nombreArticulo);
+
+                    if (idPartida != null) {
+                        if (partidaid.getInt("id") == idPartida) {
+                            des = true;
+                        }
+                    }
+
+                }
+                if (des == false) {
+                    delPartida(partidaid.getInt("id"));
+                }
+
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al conectarse con el servidor. verifique seu conecxion");
+        }
+    }
+
+    private JSONArray getPartidasCreadas(StringBuilder factura) {
+        JSONObject jsonObject = new JSONObject(factura.toString());
+        return jsonObject.getJSONArray("partidas");
     }
 
     //*****************************MODELO*****************************
