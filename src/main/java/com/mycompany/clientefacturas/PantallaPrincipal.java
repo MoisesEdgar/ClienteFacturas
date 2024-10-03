@@ -76,7 +76,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             }
         });
     }
-    
+
     //*****************************BOTONES*****************************
     private void onButonGuardarFacturaClicked(ActionEvent evt) {
         limpiarLblFactura();
@@ -103,6 +103,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         }
 
                     } else {
+
+                        limpiarPartidas();
+
                         putFactura(getIdFactura(getFacturas(), folio), getPartidas());
                         limpiarTabla();
                         limpiarTxtsPartida();
@@ -118,6 +121,47 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "No se pudo guardar la factura. Verifique su conexion.");
         }
+    }
+
+    private void limpiarPartidas() {
+        try {
+
+            String folio = txtFolio.getText();
+            Integer idFactura = getIdFactura(getFacturas(), folio);
+            StringBuilder factura = getFactura(idFactura);
+
+            JSONArray partidasCreadas = getPartidasCreadas(factura);
+            List<Partida> partidasNuevas = getPartidas();
+
+            for (int i = 0; i < partidasCreadas.length(); i++) {
+                boolean des = false;
+                JSONObject partidaid = partidasCreadas.getJSONObject(i);
+
+                for (int j = 0; j < partidasNuevas.size(); j++) {
+                    Partida partida = (Partida) partidasNuevas.get(j);
+
+                    Integer idPartida = getIdPartida(getFactura(idFactura), partida.nombreArticulo);
+
+                    if (idPartida != null) {
+                        if (partidaid.getInt("id") == idPartida) {
+                            des = true;
+                        }
+                    }
+
+                }
+                if (des == false) {
+                    delPartida(partidaid.getInt("id"));
+                }
+
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error al conectarse con el servidor. verifique seu conecxion");
+        }
+    }
+
+    private JSONArray getPartidasCreadas(StringBuilder factura) {
+        JSONObject jsonObject = new JSONObject(factura.toString());
+        return jsonObject.getJSONArray("partidas");
     }
 
     private void onButonEliminarFacturaClicked(ActionEvent evt) {
@@ -169,14 +213,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private void onButonEliminarPartidaClicked(ActionEvent evt) {
-        
+
         int index = tblFactura.getSelectedRow();
         if (index > -1) {
 
             Partida partida = modeloFacturas.getPartida(index);
             String nombre = partida.nombreArticulo;
-                modeloFacturas.eliminar(index);
-                JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
+            modeloFacturas.eliminar(index);
+            JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
         }
@@ -389,7 +433,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             Integer cantidad = (Integer) partida.cantidad;
             Double precio = (Double) partida.precio;
 
-            
             partidaJson.put("nombre_articulo", nombre);
             partidaJson.put("cantidad", cantidad);
             partidaJson.put("precio", precio);
@@ -426,17 +469,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         JSONArray partidasJson = new JSONArray();
 
-
         for (int i = 0; i < partidas.size(); i++) {
             JSONObject partidaJson = new JSONObject();
             Partida partida = (Partida) partidas.get(i);
             Integer id = 0;
-            
-            try{
-                id = getIdPartida(getFactura(idFactura),partida.nombreArticulo);
-                
-            }catch(Exception e){
-                JOptionPane.showMessageDialog(this,"Error al conectarse con el servidor. verifique seu conecxion");
+
+            try {
+                id = getIdPartida(getFactura(idFactura), partida.nombreArticulo);
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error al conectarse con el servidor. verifique seu conecxion");
             }
 
             partidaJson.put("id", id);
@@ -446,7 +488,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
             partidasJson.put(partidaJson);
         }
-        
+
         facturaJson.put("partidas", partidasJson);
 
         try (OutputStream os = conexion.getOutputStream()) {
@@ -510,7 +552,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         modeloFacturas.fireTableDataChanged();
     }
 
-     private Integer getIdPartida(StringBuilder factura, String nombre) {
+    private Integer getIdPartida(StringBuilder factura, String nombre) {
 
         JSONObject jsonObject = new JSONObject(factura.toString());
         JSONArray jsonPartidas = jsonObject.getJSONArray("partidas");
@@ -525,7 +567,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
         return null;
     }
-     
+
+    private boolean delPartida(Integer id) throws Exception {
+        URL url = new URL("http://localhost:8080/partidas/" + id);
+        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+        conexion.setRequestMethod("DELETE");
+        conexion.connect();
+
+        int responseCode = conexion.getResponseCode();
+        conexion.disconnect();
+
+        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
+    }
+
     //*****************************VALIDACIONES*****************************
     private boolean validarProducto(String producto) {
         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
@@ -685,6 +739,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     //*****************************MODELO*****************************
     private static class Partida {
+
         public String nombreArticulo;
         public Integer cantidad;
         public Double precio;
