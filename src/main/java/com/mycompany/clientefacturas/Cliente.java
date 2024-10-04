@@ -44,9 +44,9 @@ public class Cliente extends javax.swing.JFrame {
                 } else {
                     postCliente(nombre, telefono, direccion);
                     this.dispose();
-
                 }
                 limpiarTxt();
+                txtNombre.requestFocus();
             }
 
         } catch (Exception e) {
