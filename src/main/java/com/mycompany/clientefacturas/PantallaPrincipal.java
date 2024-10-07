@@ -546,22 +546,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         modeloFacturas.fireTableDataChanged();
     }
 
-    private Integer getIdPartida(StringBuilder factura, String nombre) {
-
-        JSONObject jsonObject = new JSONObject(factura.toString());
-        JSONArray jsonPartidas = jsonObject.getJSONArray("partidas");
-
-        for (int j = 0; j < jsonPartidas.length(); j++) {
-            JSONObject jsonObjectpPartidas = jsonPartidas.getJSONObject(j);
-
-            if (nombre.equalsIgnoreCase(jsonObjectpPartidas.getString("nombre_articulo"))) {
-                return jsonObjectpPartidas.getInt("id");
-            }
-
-        }
-        return null;
-    }
-
     private void getIdPartidas(StringBuilder factura) {
         partidasId.clear();
         JSONObject jsonObjectFactura = new JSONObject(factura.toString());
