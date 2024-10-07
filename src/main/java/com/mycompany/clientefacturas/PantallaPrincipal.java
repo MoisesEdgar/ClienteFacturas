@@ -118,7 +118,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                                 for (int i = 0; i < partidas.size(); i++) {
                                     Partida partida = (Partida) partidas.get(i);
 
-                                    if (i < partidasId.size()) {
+                                    
+                                    
+                                    Integer numero= partidasId.size();
+                                    if (i == partidasId.size()|| i > partidasId.size() ) {
                                         postPartida(partida.nombreArticulo, partida.cantidad, partida.precio, idFactura);
                                     }
                                 }
