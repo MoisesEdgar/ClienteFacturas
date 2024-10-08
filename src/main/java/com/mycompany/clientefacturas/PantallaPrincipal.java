@@ -100,7 +100,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         if (getIdFactura(getFacturas(), folio) == null) {
                             Integer idCliente = getIdClientes(getClientes(), codigo);
                             if (validarProducto("NOMBRE NO VALIDO")) {
-                                postFactura(folio, idCliente, getPartidas());
+                                guardarFactura(folio, idCliente, getPartidas());
                                 limpiarTabla();
                                 limpiarTxtsPartida();
                                 limpiarTxtsFactura();
@@ -122,11 +122,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                                     Integer numero = partidasId.size();
                                     if (i == partidasId.size() || i > partidasId.size()) {
-                                        postPartida(partida.nombreArticulo, partida.cantidad, partida.precio, idFactura);
+                                        guardarPartida(partida.nombreArticulo, partida.cantidad, partida.precio, idFactura);
                                     }
                                 }
 
-                                putFactura(idFactura, getPartidas());
+                                actualizarFactura(idFactura, getPartidas());
 
                                 limpiarTabla();
                                 limpiarTxtsPartida();
@@ -160,7 +160,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 Integer id = getIdFactura(getFacturas(), folio);
 
                 if (id != null) {
-                    delFactura(id);
+                    eliminarFactura(id);
                     JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
                     limpiarLblFactura();
                     limpiarTabla();
@@ -389,7 +389,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         return jsonFacturas;
     }
-
+    
     private StringBuilder getFactura(Integer id) throws Exception {
         URL url = new URL("http://localhost:8080/facturas/" + id);
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
@@ -408,7 +408,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return jsonFacturas;
     }
 
-    private void postFactura(String folio, Integer codigo, List partidas) throws Exception {
+    private void guardarFactura(String folio, Integer codigo, List partidas) throws Exception {
         URL url = new URL("http://localhost:8080/facturas");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
 
@@ -455,7 +455,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private void putFactura(Integer idFactura, List partidas) throws Exception {
+    private void actualizarFactura(Integer idFactura, List partidas) throws Exception {
         URL url = new URL("http://localhost:8080/facturas/" + idFactura);
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
         conexion.setRequestMethod("PUT");
@@ -501,7 +501,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private boolean delFactura(Integer id) throws Exception {
+    private boolean eliminarFactura(Integer id) throws Exception {
         URL url = new URL("http://localhost:8080/facturas/" + id);
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
         conexion.setRequestMethod("DELETE");
@@ -557,7 +557,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private boolean delPartida(Integer id) throws Exception {
+    private boolean eliminarPartida(Integer id) throws Exception {
         URL url = new URL("http://localhost:8080/partidas/" + id);
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
         conexion.setRequestMethod("DELETE");
@@ -569,7 +569,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
     }
 
-    private void postPartida(String nombre, Integer cantidad, Double precio, Integer idFactura) throws Exception {
+    private void guardarPartida(String nombre, Integer cantidad, Double precio, Integer idFactura) throws Exception {
         URL url = new URL("http://localhost:8080/partidas");
         HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
 
@@ -780,7 +780,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 }
                 if (des == false) {
-                    delPartida(partidaid.getInt("id"));
+                    eliminarPartida(partidaid.getInt("id"));
                 }
 
             }
