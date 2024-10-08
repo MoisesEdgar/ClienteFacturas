@@ -18,7 +18,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -94,7 +93,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     getIdFactura(getFacturas(), folio);
 
                     if (partidas.isEmpty()) {
-                        JOptionPane.showMessageDialog(this, "La factura debe contener al menos un articulo");
+                        JOptionPane.showMessageDialog(this, "La factura debe contener al menos una partida");
                         txtNombre.requestFocus();
 
                     } else {
@@ -208,7 +207,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             Partida partida = modeloFacturas.getPartida(index);
             String nombre = partida.nombreArticulo;
             modeloFacturas.eliminar(index);
-            JOptionPane.showMessageDialog(this, "Se elimino el articulo: " + nombre);
+            JOptionPane.showMessageDialog(this, "Se elimino la partida con el articulo: " + nombre);
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione el articulo a Eliminar");
         }
