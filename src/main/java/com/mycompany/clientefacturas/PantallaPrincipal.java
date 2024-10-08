@@ -16,6 +16,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -91,7 +94,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     getIdFactura(getFacturas(), folio);
 
                     if (partidas.isEmpty()) {
-                        JOptionPane.showMessageDialog(this, "La factura debe contener al menos una partida");
+                        JOptionPane.showMessageDialog(this, "La factura debe contener al menos un articulo");
                         txtNombre.requestFocus();
 
                     } else {
@@ -118,10 +121,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                                 for (int i = 0; i < partidas.size(); i++) {
                                     Partida partida = (Partida) partidas.get(i);
 
-                                    
-                                    
-                                    Integer numero= partidasId.size();
-                                    if (i == partidasId.size()|| i > partidasId.size() ) {
+                                    Integer numero = partidasId.size();
+                                    if (i == partidasId.size() || i > partidasId.size()) {
                                         postPartida(partida.nombreArticulo, partida.cantidad, partida.precio, idFactura);
                                     }
                                 }
@@ -151,9 +152,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private void onButonEliminarFacturaClicked(ActionEvent evt) {
-        String folio = lblFolio.getText();
+        String folio = txtFolio.getText();
         if (folio.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Especifique la factura a eliminar");
+            JOptionPane.showMessageDialog(this, "El folio del la factura no fue especificado");
             txtFolio.requestFocus();
         } else {
             try {
@@ -166,7 +167,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     limpiarTabla();
                     limpiarTxtsFactura();
                 } else {
-                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura");
+                    JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura. Verifique que la factura ya fue creada");
                 }
 
             } catch (Exception e) {
@@ -207,9 +208,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             Partida partida = modeloFacturas.getPartida(index);
             String nombre = partida.nombreArticulo;
             modeloFacturas.eliminar(index);
-            JOptionPane.showMessageDialog(this, "Se elimino el producto: " + nombre);
+            JOptionPane.showMessageDialog(this, "Se elimino el articulo: " + nombre);
         } else {
-            JOptionPane.showMessageDialog(this, "Seleccione la partida a Eliminar");
+            JOptionPane.showMessageDialog(this, "Seleccione el articulo a Eliminar");
         }
 
     }
@@ -941,6 +942,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                     } else {
                         if (validarFolio(folio)) {
+                            lblFolio.setText(folio);
+                            
+                            String fecha = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
+                            
+                            lblFecha.setText(fecha);
                             txtCodigo.requestFocus();
                         }
                     }
