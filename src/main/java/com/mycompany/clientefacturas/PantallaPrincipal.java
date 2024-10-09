@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
@@ -20,6 +19,13 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 public class PantallaPrincipal extends javax.swing.JFrame {
 
@@ -80,6 +86,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     List<Integer> partidasId = new ArrayList<>();
+    RestTemplate restTemplate = new RestTemplate();
 
     //*****************************BOTONES*****************************
     private void onButonGuardarFacturaClicked(ActionEvent evt) {
@@ -325,21 +332,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private StringBuilder getClientes() throws Exception {
-        URL url = new URL("http://localhost:8080/clientes");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("GET");
-        conexion.connect();
+        String url = "http://localhost:8080/clientes";
+        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-        Scanner scanner = new Scanner(url.openStream());
-        StringBuilder jsonClientes = new StringBuilder();
-
-        while (scanner.hasNext()) {
-            jsonClientes.append(scanner.nextLine());
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return new StringBuilder(response.getBody());
+        } else {
+            return null;
         }
-
-        scanner.close();
-
-        return jsonClientes;
     }
 
     private List<Partida> getPartidas() {
@@ -373,49 +373,30 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     private StringBuilder getFacturas() throws Exception {
-        URL url = new URL("http://localhost:8080/facturas");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("GET");
-        conexion.connect();
+        String url = "http://localhost:8080/facturas";
+        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-        Scanner scanner = new Scanner(url.openStream());
-        StringBuilder jsonFacturas = new StringBuilder();
-
-        while (scanner.hasNext()) {
-            jsonFacturas.append(scanner.nextLine());
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return new StringBuilder(response.getBody());
+        } else {
+            return null;
         }
-
-        scanner.close();
-
-        return jsonFacturas;
     }
-    
+
     private StringBuilder getFactura(Integer id) throws Exception {
-        URL url = new URL("http://localhost:8080/facturas/" + id);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("GET");
-        conexion.connect();
+        String url = "http://localhost:8080/facturas/" + id;
+        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-        Scanner scanner = new Scanner(url.openStream());
-        StringBuilder jsonFacturas = new StringBuilder();
-
-        while (scanner.hasNext()) {
-            jsonFacturas.append(scanner.nextLine());
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return new StringBuilder(response.getBody());
+        } else {
+            return null;
         }
 
-        scanner.close();
-
-        return jsonFacturas;
     }
 
     private void guardarFactura(String folio, Integer codigo, List partidas) throws Exception {
         URL url = new URL("http://localhost:8080/facturas");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-
-        conexion.setRequestMethod("POST");
-        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-        conexion.setRequestProperty("Accept", "application/json");
-        conexion.setDoOutput(true);
 
         JSONObject facturaJson = new JSONObject();
         facturaJson.put("folio", folio);
@@ -440,19 +421,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         facturaJson.put("partidas", partidasJson);
 
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = facturaJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(facturaJson.toString(), headers);
 
-        int responseCode = conexion.getResponseCode();
-
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            System.out.println("Factura creada exitosamente");
-
-        } else {
-            System.out.println("Error al crear factura. Código de respuesta: " + responseCode);
-        }
+//        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+//        
+//                
+//        if (response.getStatusCode() == HttpStatus.OK) {
+//            codigo = getCodigo(getClientes(), codigo);
+//            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
+//        }
     }
 
     private void actualizarFactura(Integer idFactura, List partidas) throws Exception {
@@ -501,16 +480,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private boolean eliminarFactura(Integer id) throws Exception {
-        URL url = new URL("http://localhost:8080/facturas/" + id);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("DELETE");
-        conexion.connect();
-
-        int responseCode = conexion.getResponseCode();
-        conexion.disconnect();
-
-        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
+    private void eliminarFactura(Integer id) throws Exception {
+        String url = "http://localhost:8080/facturas/" + id;
+        restTemplate.delete(url);
     }
 
     private void llenarTabla(StringBuilder factura) {
@@ -557,26 +529,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private boolean eliminarPartida(Integer id) throws Exception {
-        URL url = new URL("http://localhost:8080/partidas/" + id);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("DELETE");
-        conexion.connect();
-
-        int responseCode = conexion.getResponseCode();
-        conexion.disconnect();
-
-        return responseCode == HttpURLConnection.HTTP_NO_CONTENT;
+    private void eliminarPartida(Integer id) throws Exception {
+        String url = "http://localhost:8080/partidas/" + id;
+        restTemplate.delete(url);
     }
 
     private void guardarPartida(String nombre, Integer cantidad, Double precio, Integer idFactura) throws Exception {
-        URL url = new URL("http://localhost:8080/partidas");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-
-        conexion.setRequestMethod("POST");
-        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-        conexion.setRequestProperty("Accept", "application/json");
-        conexion.setDoOutput(true);
+        String url = "http://localhost:8080/partidas";
 
         JSONObject partidaJson = new JSONObject();
         partidaJson.put("nombre_articulo", nombre);
@@ -584,20 +543,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         partidaJson.put("precio", precio);
         partidaJson.put("factura_id", idFactura);
 
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = partidaJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        int responseCode = conexion.getResponseCode();
+        HttpEntity<String> request = new HttpEntity<>(partidaJson.toString(), headers);
 
-        if (responseCode == HttpURLConnection.HTTP_OK) {
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
             System.out.println("Partida creada exitosamente");
-
         } else {
-            System.out.println("Error al crear partida código de respuesta: " + responseCode);
-
+            System.out.println("Error al crear partida código de respuesta: " + response.getStatusCode());
         }
+
     }
 
     //*****************************VALIDACIONES*****************************
@@ -942,9 +900,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else {
                         if (validarFolio(folio)) {
                             lblFolio.setText(folio);
-                            
+
                             String fecha = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
-                            
+
                             lblFecha.setText(fecha);
                             txtCodigo.requestFocus();
                         }
@@ -1074,7 +1032,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         txtFolio.requestFocus();
     }
 
- 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
