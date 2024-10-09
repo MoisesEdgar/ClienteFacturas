@@ -1074,6 +1074,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         txtFolio.requestFocus();
     }
 
+ 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {

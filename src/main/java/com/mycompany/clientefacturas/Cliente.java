@@ -1,15 +1,20 @@
 package com.mycompany.clientefacturas;
 
 import java.awt.event.ActionEvent;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Scanner;
 import javax.swing.JOptionPane;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 public class Cliente extends javax.swing.JFrame {
+
+    RestTemplate restTemplate = new RestTemplate();
 
     public Cliente() {
         initComponents();
@@ -37,12 +42,13 @@ public class Cliente extends javax.swing.JFrame {
         String direccion = txtDireccion.getText();
 
         try {
+
             if (validarTxt()) {
                 StringBuilder clientes = getClientes();
                 if (existenciaCliente(clientes, nombre)) {
                     JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 } else {
-                    postCliente(nombre, telefono, direccion);
+                    guardarCliente(nombre, telefono, direccion);
                     this.dispose();
                 }
                 limpiarTxt();
@@ -55,18 +61,10 @@ public class Cliente extends javax.swing.JFrame {
 
     }
 
-  
-    private void postCliente(String nombre, String telefono, String direccion) throws Exception {
-        URL url = new URL("http://localhost:8080/clientes");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-
-        conexion.setRequestMethod("POST");
-        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-        conexion.setRequestProperty("Accept", "application/json");
-        conexion.setDoOutput(true);
+    private void guardarCliente(String nombre, String telefono, String direccion) throws Exception {
+        String url = "http://localhost:8080/clientes";
 
         JSONObject clienteJson = new JSONObject();
-
         String ultimoCodigo = "";
         JSONArray jsonArray = new JSONArray(getClientes().toString());
         String codigo = "C-";
@@ -83,13 +81,12 @@ public class Cliente extends javax.swing.JFrame {
 
             Integer cont = Integer.parseInt(salto[1]);
             String ceros = "";
-            
+
             for (int i = String.valueOf(cont).length(); i < 3;) {
                 i++;
-                 ceros = ceros + "0";
+                ceros = ceros + "0";
             }
-
-            codigo = "C-" + ceros + (Integer.parseInt(salto[1]) + 1);    
+            codigo = "C-" + ceros + (Integer.parseInt(salto[1]) + 1);
         }
 
         clienteJson.put("codigo", codigo);
@@ -97,24 +94,17 @@ public class Cliente extends javax.swing.JFrame {
         clienteJson.put("telefono", telefono);
         clienteJson.put("direccion", direccion);
 
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = clienteJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        int responseCode = conexion.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            System.out.println("Cliente agregado corectamente");
-         
-            
+        HttpEntity<String> request = new HttpEntity<>(clienteJson.toString(), headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
             codigo = getCodigo(getClientes(), codigo);
             JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
-
-        } else {
-            System.out.println("Error al crear cliente");
-
         }
-
     }
 
     private String getCodigo(StringBuilder clientes, String codigo) {
@@ -137,23 +127,16 @@ public class Cliente extends javax.swing.JFrame {
     }
 
     private StringBuilder getClientes() throws Exception {
-        URL url = new URL("http://localhost:8080/clientes");
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("GET");
-        conexion.connect();
+        String url = "http://localhost:8080/clientes";
+        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-        Scanner scanner = new Scanner(url.openStream());
-        StringBuilder jsonClientes = new StringBuilder();
-
-        while (scanner.hasNext()) {
-            jsonClientes.append(scanner.nextLine());
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return new StringBuilder(response.getBody());
+        } else {
+            return null;
         }
-
-        scanner.close();
-
-        return jsonClientes;
     }
-    
+
     private boolean existenciaCliente(StringBuilder clientes, String nombre) {
         JSONArray jsonArray = new JSONArray(clientes.toString());
 
@@ -165,15 +148,13 @@ public class Cliente extends javax.swing.JFrame {
         }
         return false;
     }
-    
+
     public String generarCodigo(String nombre, String telefono, String direccion) {
         String datos = nombre + telefono + direccion;
 
         return Integer.toHexString(datos.hashCode()).toUpperCase();
     }
 
-    
-    
     private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
         char c = evt.getKeyChar();
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {
@@ -207,7 +188,7 @@ public class Cliente extends javax.swing.JFrame {
 
         return true;
     }
-     
+
     private void limpiarTxt() {
         txtNombre.setText("");
         txtTelefono.setText("");
