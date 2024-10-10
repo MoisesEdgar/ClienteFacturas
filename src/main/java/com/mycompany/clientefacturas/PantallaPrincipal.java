@@ -4,7 +4,6 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.OutputStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +12,6 @@ import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import org.json.JSONArray;
@@ -144,7 +141,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             } else {
                                 JOptionPane.showMessageDialog(this, "Modificar los nombres no validos para poder guartdar la factura");
                             }
-
                         }
                     }
                 }
@@ -395,12 +391,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
-    private void guardarFactura(String folio, Integer codigo, List partidas) throws Exception {
-        URL url = new URL("http://localhost:8080/facturas");
+    private void guardarFactura(String folio, Integer id, List partidas) throws Exception {
+        String url = "http://localhost:8080/facturas";
 
         JSONObject facturaJson = new JSONObject();
         facturaJson.put("folio", folio);
-        facturaJson.put("cliente_id", codigo);
+        facturaJson.put("cliente_id", id);
 
         JSONArray partidasJson = new JSONArray();
 
@@ -408,13 +404,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             JSONObject partidaJson = new JSONObject();
             Partida partida = (Partida) partidas.get(i);
 
-            String nombre = (String) partida.nombreArticulo;
-            Integer cantidad = (Integer) partida.cantidad;
-            Double precio = (Double) partida.precio;
-
-            partidaJson.put("nombre_articulo", nombre);
-            partidaJson.put("cantidad", cantidad);
-            partidaJson.put("precio", precio);
+            partidaJson.put("nombre_articulo", partida.nombreArticulo);
+            partidaJson.put("cantidad", partida.cantidad);
+            partidaJson.put("precio", partida.precio);
 
             partidasJson.put(partidaJson);
         }
@@ -423,27 +415,22 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity<>(facturaJson.toString(), headers);
 
-//        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-//        
-//                
-//        if (response.getStatusCode() == HttpStatus.OK) {
-//            codigo = getCodigo(getClientes(), codigo);
-//            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
-//        }
+        HttpEntity<String> entity = new HttpEntity<>(facturaJson.toString(), headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            System.out.println("Factura creada exitosamente");
+        } else {
+            System.out.println("Error al crear factura. Código de respuesta: " + response.getStatusCodeValue());
+        }
     }
 
     private void actualizarFactura(Integer idFactura, List partidas) throws Exception {
-        URL url = new URL("http://localhost:8080/facturas/" + idFactura);
-        HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
-        conexion.setRequestMethod("PUT");
+        String url = "http://localhost:8080/facturas/" + idFactura;
 
-        conexion.setRequestProperty("Content-Type", "application/json; utf-8");
-        conexion.setRequestProperty("Accept", "application/json");
-        conexion.setDoOutput(true);
         JSONObject facturaJson = new JSONObject();
-
         JSONArray partidasJson = new JSONArray();
 
         for (int i = 0; i < partidas.size(); i++) {
@@ -456,27 +443,25 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 partidaJson.put("cantidad", (Integer) partida.cantidad);
                 partidaJson.put("precio", (Double) partida.precio);
                 partidasJson.put(partidaJson);
+
             } else {
                 break;
             }
-
         }
 
         facturaJson.put("partidas", partidasJson);
 
-        try (OutputStream os = conexion.getOutputStream()) {
-            byte[] input = facturaJson.toString().getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        int responseCode = conexion.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
+        HttpEntity<String> entity = new HttpEntity<>(facturaJson.toString(), headers);
 
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
             System.out.println("Factura actualizada exitosamente");
-
         } else {
-            System.out.println("Error al actualizar factura. Código de respuesta: " + responseCode);
-
+            System.out.println("Error al actualizar factura. Código de respuesta: " + response.getStatusCode());
         }
     }
 
@@ -609,7 +594,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             txtFolio.requestFocus();
             return false;
         }
-
         return true;
     }
 
@@ -619,9 +603,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             txtCodigo.requestFocus();
             return false;
         }
-
         return true;
-
     }
 
     private boolean validarFolio(String folio) {
@@ -662,7 +644,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         txtFolio.setText("F-" + ceros + (ultimoNumeracion + 1));
                         return false;
                     }
-
                     return true;
                 }
             } else {
@@ -670,11 +651,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 txtFolio.setText("");
                 return false;
             }
-
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
         }
-
         return false;
     }
 
@@ -682,7 +661,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         try {
             if (codigo.matches("^C-\\d\\d\\d")) {
                 return true;
-
             } else {
                 JOptionPane.showMessageDialog(this, "El formato del codigo no es valido. Debe seguir el formato de C-000");
                 txtCodigo.setText("");
@@ -691,7 +669,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
         }
-
         return false;
     }
 
@@ -717,7 +694,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private void delPartidasModificadas() {
         try {
-
             String folio = txtFolio.getText();
             Integer idFactura = getIdFactura(getFacturas(), folio);
             StringBuilder factura = getFactura(idFactura);
@@ -735,12 +711,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         des = true;
                         break;
                     }
-
                 }
                 if (des == false) {
                     eliminarPartida(partidaid.getInt("id"));
                 }
-
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error al conectarse con el servidor. verifique seu conecxion");
@@ -759,7 +733,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         public Integer cantidad;
         public Double precio;
         public Double total;
-
     }
 
     private static class ModeloFactura extends AbstractTableModel {
