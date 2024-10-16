@@ -832,7 +832,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
             evt.consume();
         }
-        if (lblFolio.getText().isEmpty()) {
+        if (txtFolio.getText().isEmpty()) {
             if (txtFolio.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
                 evt.consume();
@@ -852,7 +852,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if (c < '0' || c > '9') {
             evt.consume();
         }
-        if (lblFolio.getText().isEmpty()) {
+        if (txtFolio.getText().isEmpty()) {
             if (txtFolio.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
                 evt.consume();

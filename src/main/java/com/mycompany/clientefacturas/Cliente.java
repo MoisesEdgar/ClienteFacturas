@@ -38,7 +38,7 @@ public class Cliente extends javax.swing.JFrame {
 
     private void onButonAgregarClicked(ActionEvent evt) {
         String nombre = txtNombre.getText();
-        String telefono = txtTelefono.getText();
+        String telefono = txtTelefono.getText();    
         String direccion = txtDireccion.getText();
 
         try {
@@ -173,18 +173,32 @@ public class Cliente extends javax.swing.JFrame {
 
         if (txtNombre.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "No se especifico el nombre del cliente");
+            txtNombre.setText("");
+            txtNombre.requestFocus();
             return false;
         }
 
         if (txtTelefono.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "No se especifico el telefono del cliente");
+            txtTelefono.setText("");
+            txtTelefono.requestFocus();
             return false;
         }
-
+           
+        if(txtTelefono.getText().length()<10){
+            JOptionPane.showMessageDialog(this, "Numero de telefono no valido");
+            txtTelefono.setText("");
+            txtTelefono.requestFocus();
+            return false;
+        }
+        
         if (txtDireccion.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "NO se espesifico la direccion");
+            JOptionPane.showMessageDialog(this, "No se espesifico la direccion");
+            txtDireccion.setText("");
+            txtDireccion.requestFocus();
             return false;
         }
+     
 
         return true;
     }
