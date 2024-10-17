@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -395,7 +396,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             if (i < partidasId.size()) {
                 partidaJson.put("id", partidasId.get(i));
             }
-            
+
             partidaJson.put("nombre_articulo", (String) partida.nombreArticulo);
             partidaJson.put("cantidad", (Integer) partida.cantidad);
             partidaJson.put("precio", (Double) partida.precio);
@@ -483,7 +484,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         return partidas;
     }
-    
+
     //*****************************VALIDACIONES*****************************
     private boolean validarProducto(String producto) {
         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
@@ -635,10 +636,69 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     //*****************************MODELO*****************************
     private static class Partida {
+
         public String nombreArticulo;
         public Integer cantidad;
         public Double precio;
         public Double total;
+    }
+
+    public class FacturasPojo implements Serializable {
+        public Long id;
+        public String folio;
+        public Double subtotal;
+        public Double total;
+        public Integer clienteId;
+        public List<Partida> partidas;
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getFolio() {
+            return folio;
+        }
+
+        public void setFolio() {
+            this.folio = folio;
+        }
+
+        public Double getSubtotal() {
+            return subtotal;
+        }
+
+        public void setSubtotal(Double subtotal) {
+            this.subtotal = subtotal;
+        }
+
+        public Double getTotal() {
+            return subtotal;
+        }
+
+        public void setTotal(Double total) {
+            this.total = total;
+        }
+
+        public Integer getClienteId() {
+            return clienteId;
+        }
+
+        public void setClienteId(Integer clienteId) {
+            this.clienteId = clienteId;
+        }
+
+        public List<Partida> getPartidas() {
+            return partidas;
+        }
+
+        public void setPartidas(List<Partida> partidas) {
+            this.partidas = partidas;
+        }
+
     }
 
     private static class ModeloFactura extends AbstractTableModel {

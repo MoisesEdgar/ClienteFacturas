@@ -1,9 +1,11 @@
 package com.mycompany.clientefacturas;
 
 import java.awt.event.ActionEvent;
+import java.io.Serializable;
 import javax.swing.JOptionPane;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Assertions;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -38,73 +40,158 @@ public class Cliente extends javax.swing.JFrame {
 
     private void onButonAgregarClicked(ActionEvent evt) {
         String nombre = txtNombre.getText();
-        String telefono = txtTelefono.getText();    
+        String telefono = txtTelefono.getText();
         String direccion = txtDireccion.getText();
 
         try {
-
-            if (validarTxt()) {
-                StringBuilder clientes = getClientes();
-                if (existenciaCliente(clientes, nombre)) {
-                    JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
-                } else {
-                    guardarCliente(nombre, telefono, direccion);
-                    this.dispose();
-                }
-                limpiarTxt();
-                txtNombre.requestFocus();
-            }
-
+            getClientes();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
         }
 
+//        try {
+//
+//            if (validarTxt()) {
+//                StringBuilder clientes = getClientes();
+//                if (existenciaCliente(clientes, nombre)) {
+//                    JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
+//                } else {
+//                    guardarCliente(nombre, telefono, direccion);
+//                    this.dispose();
+//                }
+//                limpiarTxt();
+//                txtNombre.requestFocus();
+//            }
+//
+//        } catch (Exception e) {
+//            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
+//        }
     }
 
-    private void guardarCliente(String nombre, String telefono, String direccion) throws Exception {
+    public class ClientePojo implements Serializable {
+
+        public Long id;
+        public String codigo;
+        public String nombre;
+        public String telefono;
+        public String direccion;
+        
+        public ClientePojo(Long id, String codigo, String nombre, String telefono, String direccion){
+            this.id = id;
+            this.codigo = codigo;
+            this.nombre = nombre;
+            this.telefono = telefono;
+            this.direccion = direccion;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getCodigo() {
+            return codigo;
+        }
+
+        public void setCodigo(String codigo) {
+            this.codigo = codigo;
+        }
+
+        public String getNombre() {
+            return nombre;
+        }
+
+        public void setNombre(String nombre) {
+            this.nombre = nombre;
+        }
+
+        public String getTelefono() {
+            return telefono;
+        }
+
+        public void setTelefono(String telefono) {
+            this.telefono = telefono;
+        }
+
+        public String getDireccion() {
+            return direccion;
+        }
+
+        public void setDireccion(String direccion) {
+            this.direccion = direccion;
+        }
+
+    }
+
+//    private void guardarCliente(String nombre, String telefono, String direccion) throws Exception {
+//        String url = "http://localhost:8080/clientes";
+//
+//        JSONObject clienteJson = new JSONObject();
+//        String ultimoCodigo = "";
+//        JSONArray jsonArray = new JSONArray(getClientes().toString());
+//        String codigo = "C-";
+//
+//        if (jsonArray.isEmpty()) {
+//            codigo = "C-001";
+//        } else {
+//            for (int i = 0; i < jsonArray.length(); i++) {
+//                JSONObject jsonObject = jsonArray.getJSONObject(i);
+//                ultimoCodigo = jsonObject.getString("codigo");
+//            }
+//
+//            String[] salto = ultimoCodigo.split("-");
+//
+//            Integer cont = Integer.parseInt(salto[1]);
+//            String ceros = "";
+//
+//            for (int i = String.valueOf(cont).length(); i < 3;) {
+//                i++;
+//                ceros = ceros + "0";
+//            }
+//            codigo = "C-" + ceros + (Integer.parseInt(salto[1]) + 1);
+//        }
+//        
+//        
+//        
+//
+//        HttpEntity<ClientePojo> request = new HttpEntity<>(new ClientePojo(null,codigo,nombre, telefono, direccion));
+//
+//        ResponseEntity<ClientePojo> response = restTemplate.exchange(url, HttpMethod.POST, request, ClientePojo.class);
+//
+//        Assertions.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
+//
+//        ClientePojo cliente = response.getBody();
+//
+//        if (response.getStatusCode() == HttpStatus.OK) {
+//            codigo = getCodigo(getClientes(), codigo);
+//            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
+//        }
+//    }
+//    
+    
+    
+//        private StringBuilder getClientes() throws Exception {
+//        String url = "http://localhost:8080/clientes";
+//        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+//
+//        if (response.getStatusCode() == HttpStatus.OK) {
+//            return new StringBuilder(response.getBody());
+//        } else {
+//            return null;
+//        }
+//    }
+//        
+        
+    
+    private void getClientes() throws Exception {
         String url = "http://localhost:8080/clientes";
-
-        JSONObject clienteJson = new JSONObject();
-        String ultimoCodigo = "";
-        JSONArray jsonArray = new JSONArray(getClientes().toString());
-        String codigo = "C-";
-
-        if (jsonArray.isEmpty()) {
-            codigo = "C-001";
-        } else {
-            for (int i = 0; i < jsonArray.length(); i++) {
-                JSONObject jsonObject = jsonArray.getJSONObject(i);
-                ultimoCodigo = jsonObject.getString("codigo");
-            }
-
-            String[] salto = ultimoCodigo.split("-");
-
-            Integer cont = Integer.parseInt(salto[1]);
-            String ceros = "";
-
-            for (int i = String.valueOf(cont).length(); i < 3;) {
-                i++;
-                ceros = ceros + "0";
-            }
-            codigo = "C-" + ceros + (Integer.parseInt(salto[1]) + 1);
-        }
-
-        clienteJson.put("codigo", codigo);
-        clienteJson.put("nombre", nombre);
-        clienteJson.put("telefono", telefono);
-        clienteJson.put("direccion", direccion);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> request = new HttpEntity<>(clienteJson.toString(), headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            codigo = getCodigo(getClientes(), codigo);
-            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
-        }
+        ClientePojo clienteD = restTemplate.getForObject(url, ClientePojo.class);
+        
+        Assertions.assertNotNull(clienteD.getNombre());
+        Assertions.assertEquals(clienteD.getId(), 1L);
     }
 
     private String getCodigo(StringBuilder clientes, String codigo) {
@@ -124,17 +211,6 @@ public class Cliente extends javax.swing.JFrame {
 
         }
         return null;
-    }
-
-    private StringBuilder getClientes() throws Exception {
-        String url = "http://localhost:8080/clientes";
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            return new StringBuilder(response.getBody());
-        } else {
-            return null;
-        }
     }
 
     private boolean existenciaCliente(StringBuilder clientes, String nombre) {
@@ -184,21 +260,20 @@ public class Cliente extends javax.swing.JFrame {
             txtTelefono.requestFocus();
             return false;
         }
-           
-        if(txtTelefono.getText().length()<10){
+
+        if (txtTelefono.getText().length() < 10) {
             JOptionPane.showMessageDialog(this, "Numero de telefono no valido");
             txtTelefono.setText("");
             txtTelefono.requestFocus();
             return false;
         }
-        
+
         if (txtDireccion.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "No se espesifico la direccion");
             txtDireccion.setText("");
             txtDireccion.requestFocus();
             return false;
         }
-     
 
         return true;
     }
