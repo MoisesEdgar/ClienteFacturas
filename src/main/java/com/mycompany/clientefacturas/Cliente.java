@@ -2,15 +2,12 @@ package com.mycompany.clientefacturas;
 
 import java.awt.event.ActionEvent;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.JOptionPane;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Assertions;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,7 +17,6 @@ public class Cliente extends javax.swing.JFrame {
 
     public Cliente() {
         initComponents();
-
         btnAgregar.addActionListener(this::onButonAgregarClicked);
 
         txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -35,54 +31,15 @@ public class Cliente extends javax.swing.JFrame {
                 txtTelefonoKeyTyped(evt);
             }
         });
-
     }
 
-    private void onButonAgregarClicked(ActionEvent evt) {
-        String nombre = txtNombre.getText();
-        String telefono = txtTelefono.getText();
-        String direccion = txtDireccion.getText();
-
-        try {
-            getClientes();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
-        }
-
-//        try {
-//
-//            if (validarTxt()) {
-//                StringBuilder clientes = getClientes();
-//                if (existenciaCliente(clientes, nombre)) {
-//                    JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
-//                } else {
-//                    guardarCliente(nombre, telefono, direccion);
-//                    this.dispose();
-//                }
-//                limpiarTxt();
-//                txtNombre.requestFocus();
-//            }
-//
-//        } catch (Exception e) {
-//            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
-//        }
-    }
-
-    public class ClientePojo implements Serializable {
+    public static class ClientePojo implements Serializable {
 
         public Long id;
         public String codigo;
         public String nombre;
         public String telefono;
         public String direccion;
-        
-        public ClientePojo(Long id, String codigo, String nombre, String telefono, String direccion){
-            this.id = id;
-            this.codigo = codigo;
-            this.nombre = nombre;
-            this.telefono = telefono;
-            this.direccion = direccion;
-        }
 
         public Long getId() {
             return id;
@@ -123,112 +80,92 @@ public class Cliente extends javax.swing.JFrame {
         public void setDireccion(String direccion) {
             this.direccion = direccion;
         }
-
     }
 
-//    private void guardarCliente(String nombre, String telefono, String direccion) throws Exception {
-//        String url = "http://localhost:8080/clientes";
-//
-//        JSONObject clienteJson = new JSONObject();
-//        String ultimoCodigo = "";
-//        JSONArray jsonArray = new JSONArray(getClientes().toString());
-//        String codigo = "C-";
-//
-//        if (jsonArray.isEmpty()) {
-//            codigo = "C-001";
-//        } else {
-//            for (int i = 0; i < jsonArray.length(); i++) {
-//                JSONObject jsonObject = jsonArray.getJSONObject(i);
-//                ultimoCodigo = jsonObject.getString("codigo");
-//            }
-//
-//            String[] salto = ultimoCodigo.split("-");
-//
-//            Integer cont = Integer.parseInt(salto[1]);
-//            String ceros = "";
-//
-//            for (int i = String.valueOf(cont).length(); i < 3;) {
-//                i++;
-//                ceros = ceros + "0";
-//            }
-//            codigo = "C-" + ceros + (Integer.parseInt(salto[1]) + 1);
-//        }
-//        
-//        
-//        
-//
-//        HttpEntity<ClientePojo> request = new HttpEntity<>(new ClientePojo(null,codigo,nombre, telefono, direccion));
-//
-//        ResponseEntity<ClientePojo> response = restTemplate.exchange(url, HttpMethod.POST, request, ClientePojo.class);
-//
-//        Assertions.assertEquals(response.getStatusCode(), HttpStatus.CREATED);
-//
-//        ClientePojo cliente = response.getBody();
-//
-//        if (response.getStatusCode() == HttpStatus.OK) {
-//            codigo = getCodigo(getClientes(), codigo);
-//            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
-//        }
-//    }
-//    
-    
-    
-//        private StringBuilder getClientes() throws Exception {
-//        String url = "http://localhost:8080/clientes";
-//        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-//
-//        if (response.getStatusCode() == HttpStatus.OK) {
-//            return new StringBuilder(response.getBody());
-//        } else {
-//            return null;
-//        }
-//    }
-//        
-        
-    
-    private void getClientes() throws Exception {
+    private void onButonAgregarClicked(ActionEvent evt) {
+        try {
+            if (validarTxt()) {
+                if (clienteExistente()) {
+                    String nombre = txtNombre.getText();
+                    String telefono = txtTelefono.getText();
+                    String direccion = txtDireccion.getText();
+
+                    guardarCliente(nombre, telefono, direccion);
+                    this.dispose();
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
+        }
+    }
+
+    private List<ClientePojo> getClientes() throws Exception {
         String url = "http://localhost:8080/clientes";
-        ClientePojo clienteD = restTemplate.getForObject(url, ClientePojo.class);
+
+        ClientePojo[] clientesArray = restTemplate.getForObject(url, ClientePojo[].class);
+        List<ClientePojo> clientes = Arrays.asList(clientesArray);
+
+        return clientes;
+    }
+
+    private void guardarCliente(String nombre, String telefono, String direccion) throws Exception {
+        String url = "http://localhost:8080/clientes";
+
+        String codigo = crearCodigo();
         
-        Assertions.assertNotNull(clienteD.getNombre());
-        Assertions.assertEquals(clienteD.getId(), 1L);
-    }
+        ClientePojo clienteNuevo = new ClientePojo();
+        clienteNuevo.setCodigo(codigo);
+        clienteNuevo.setNombre(nombre);
+        clienteNuevo.setTelefono(telefono);
+        clienteNuevo.setDireccion(direccion);
 
-    private String getCodigo(StringBuilder clientes, String codigo) {
+        HttpEntity<ClientePojo> request = new HttpEntity<>(clienteNuevo);
+        ResponseEntity<ClientePojo> response = restTemplate.exchange(url, HttpMethod.POST, request, ClientePojo.class);
 
-        JSONArray jsonArray = new JSONArray(clientes.toString());
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-            String buscarCodigo = jsonObject.getString("codigo");
-            String[] salto = buscarCodigo.split("-");
-            buscarCodigo = "C-" + salto[1];
-
-            if (buscarCodigo.equalsIgnoreCase(codigo)) {
-                return jsonObject.getString("codigo");
-            }
-
+        if (response.getStatusCode() == HttpStatus.OK) {
+            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
         }
-        return null;
     }
+    
+    private String crearCodigo() throws Exception {
+        String codigoAnterior = "";
+        String codigo = "C-";
+        List<ClientePojo> clientes = getClientes();
+     
+        if (clientes.isEmpty()) {
+            codigo = "C-001";
+        } else {
+         
+        for (ClientePojo cliente : clientes) {
+            codigoAnterior = cliente.getCodigo();
+        }
+           
+            String[] salto = codigoAnterior.split("-");
 
-    private boolean existenciaCliente(StringBuilder clientes, String nombre) {
-        JSONArray jsonArray = new JSONArray(clientes.toString());
+            Integer cont = Integer.parseInt(salto[1]);
+            String ceros = "";
 
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-            if (nombre.equalsIgnoreCase(jsonObject.getString("nombre"))) {
-                return true;
+            for (int i = String.valueOf(cont).length(); i < 3;) {
+                i++;
+                ceros = ceros + "0";
+            }
+            
+            codigo = "C-" + ceros + (Integer.parseInt(salto[1]) + 1);
+        }
+        return codigo;
+    }
+    
+    private boolean clienteExistente() throws Exception {
+        List<ClientePojo> clientes = getClientes();
+        for (ClientePojo cliente : clientes) {
+            if (cliente.getNombre().equalsIgnoreCase(txtNombre.getText())) {
+                JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
+                txtNombre.setText("");
+                txtNombre.requestFocus();
+                return false;
             }
         }
-        return false;
-    }
-
-    public String generarCodigo(String nombre, String telefono, String direccion) {
-        String datos = nombre + telefono + direccion;
-
-        return Integer.toHexString(datos.hashCode()).toUpperCase();
+        return true;
     }
 
     private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
@@ -274,14 +211,7 @@ public class Cliente extends javax.swing.JFrame {
             txtDireccion.requestFocus();
             return false;
         }
-
         return true;
-    }
-
-    private void limpiarTxt() {
-        txtNombre.setText("");
-        txtTelefono.setText("");
-        txtDireccion.setText("");
     }
 
     @SuppressWarnings("unchecked")
@@ -382,7 +312,6 @@ public class Cliente extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     public static void main(String args[]) {
-
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new Cliente().setVisible(true);
