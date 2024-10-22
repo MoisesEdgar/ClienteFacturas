@@ -39,47 +39,7 @@ public class Cliente extends javax.swing.JFrame {
         public String codigo;
         public String nombre;
         public String telefono;
-        public String direccion;
-
-        public Long getId() {
-            return id;
-        }
-
-        public void setId(Long id) {
-            this.id = id;
-        }
-
-        public String getCodigo() {
-            return codigo;
-        }
-
-        public void setCodigo(String codigo) {
-            this.codigo = codigo;
-        }
-
-        public String getNombre() {
-            return nombre;
-        }
-
-        public void setNombre(String nombre) {
-            this.nombre = nombre;
-        }
-
-        public String getTelefono() {
-            return telefono;
-        }
-
-        public void setTelefono(String telefono) {
-            this.telefono = telefono;
-        }
-
-        public String getDireccion() {
-            return direccion;
-        }
-
-        public void setDireccion(String direccion) {
-            this.direccion = direccion;
-        }
+        public String direccion; 
     }
 
     private void onButonAgregarClicked(ActionEvent evt) {
@@ -114,10 +74,10 @@ public class Cliente extends javax.swing.JFrame {
         String codigo = crearCodigo();
         
         ClientePojo clienteNuevo = new ClientePojo();
-        clienteNuevo.setCodigo(codigo);
-        clienteNuevo.setNombre(nombre);
-        clienteNuevo.setTelefono(telefono);
-        clienteNuevo.setDireccion(direccion);
+        clienteNuevo.codigo = codigo;
+        clienteNuevo.nombre = nombre;
+        clienteNuevo.telefono = telefono;
+        clienteNuevo.direccion = direccion;
 
         HttpEntity<ClientePojo> request = new HttpEntity<>(clienteNuevo);
         ResponseEntity<ClientePojo> response = restTemplate.exchange(url, HttpMethod.POST, request, ClientePojo.class);
@@ -137,7 +97,7 @@ public class Cliente extends javax.swing.JFrame {
         } else {
          
         for (ClientePojo cliente : clientes) {
-            codigoAnterior = cliente.getCodigo();
+            codigoAnterior = cliente.codigo;
         }
            
             String[] salto = codigoAnterior.split("-");
@@ -158,7 +118,7 @@ public class Cliente extends javax.swing.JFrame {
     private boolean clienteExistente() throws Exception {
         List<ClientePojo> clientes = getClientes();
         for (ClientePojo cliente : clientes) {
-            if (cliente.getNombre().equalsIgnoreCase(txtNombre.getText())) {
+            if (cliente.nombre.equalsIgnoreCase(txtNombre.getText())) {
                 JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 txtNombre.setText("");
                 txtNombre.requestFocus();

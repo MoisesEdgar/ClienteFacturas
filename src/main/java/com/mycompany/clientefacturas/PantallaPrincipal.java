@@ -1,5 +1,6 @@
 package com.mycompany.clientefacturas;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -17,13 +18,9 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
@@ -83,7 +80,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         });
     }
 
-    private static class PartidaConsulta implements Serializable {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private static class PartidaClass implements Serializable {
 
         public Long id;
         public String nombre_articulo;
@@ -92,7 +90,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         public Long factura_id;
     }
 
-    public static class FacturaConsulta implements Serializable {
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class FacturaClass implements Serializable {
 
         public Long id;
         public String folio;
@@ -100,25 +99,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         public Double subtotal;
         public Double total;
         public Integer cliente_id;
-        public List<PartidaConsulta> partidas;
+        public List<PartidaClass> partidas;
 
     }
 
-    private static class PartidaGuardar implements Serializable {
-
-        public String nombre_articulo;
-        public Integer cantidad;
-        public Double precio;
-    }
-
-    public static class FacturaGuardar implements Serializable {
-
-        public String folio;
-        public Integer cliente_id;
-        public List<PartidaGuardar> partidas;
-    }
-
-    public static class ClientePojo implements Serializable {
+    public static class ClienteClass implements Serializable {
 
         public Long id;
         public String codigo;
@@ -127,14 +112,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         public String direccion;
     }
 
-    List<Integer> partidasId = new ArrayList<>();
+    List<Long> partidasId = new ArrayList<>();
     RestTemplate restTemplate = new RestTemplate();
+    FacturaClass factura = new FacturaClass();
 
     //*****************************BOTONES*****************************
     private void onButonGuardarFacturaClicked(ActionEvent evt) {
         String folio = txtFolio.getText();
         String codigo = txtCodigo.getText();
-        List<PartidaGuardar> partidas = getPartidas();
+        List<PartidaClass> partidas = getPartidas();
 
         try {
             if (validarTxtFolio()) {
@@ -142,27 +128,21 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     if (partidas.isEmpty()) {
                         JOptionPane.showMessageDialog(this, "La factura debe contener al menos una partida");
                         txtNombre.requestFocus();
-
                     } else {
 
-                        List<FacturaConsulta> facturas = getFacturas();
-                        boolean opc = false;
-                        for (int i = 0; i < facturas.size(); i++) {
-                            FacturaConsulta factura = facturas.get(i);
-                            if (factura.folio.equals(folio)) {
-                                opc = true;
-                            }
-                        }
+                        List<FacturaClass> facturas = getFacturas();
+                        //anyMatch(predicado -> predicado) devuelve true o false si alguno de los elementos coinside          
+                        boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
 
-                        if (opc == false) {
-                            List<ClientePojo> clientes = getClientes();
-                            int idCliente = 0;
-                            for (int i = 0; i < clientes.size(); i++) {
-                                ClientePojo cliente = clientes.get(i);
-                                if (cliente.codigo.equals(codigo)) {
-                                    idCliente = Math.toIntExact(cliente.id);
-                                }
-                            }
+                        if (existenciaFactura == false) {
+
+                            List<ClienteClass> clientes = getClientes();
+                            //filter (predicado -> predicado) filatra elementos que coinsidan con el predicado
+                            //findFirst() devuelve el primer elemento del steam 
+                            int idCliente = clientes.stream().filter(cliente -> cliente.codigo.equals(codigo))
+                                    .mapToInt(cliente -> Math.toIntExact(cliente.id))
+                                    .findFirst()
+                                    .orElse(0);
 
                             if (validarProducto("NOMBRE NO VALIDO")) {
                                 guardarFactura(folio, idCliente, getPartidas());
@@ -176,7 +156,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         } else {
                             Integer idFactura = 0;
                             for (int i = 0; i < facturas.size(); i++) {
-                                FacturaConsulta factura = facturas.get(i);
+                                FacturaClass factura = facturas.get(i);
                                 if (factura.folio.equals(folio)) {
                                     idFactura = Math.toIntExact(factura.id);
                                 }
@@ -210,14 +190,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         } else {
             try {
 
-                List<FacturaConsulta> facturas = getFacturas();
-                Integer id = 0;
-                for (int i = 0; i < facturas.size(); i++) {
-                    FacturaConsulta factura = facturas.get(i);
-                    if (factura.folio.equals(folio)) {
-                        id = Math.toIntExact(factura.id);
-                    }
-                }
+                List<FacturaClass> facturas = getFacturas();
+                int id = facturas.stream()
+                        .filter(factura -> factura.folio.equals(folio))
+                        .mapToInt(factura -> Math.toIntExact(factura.id))
+                        .findFirst().orElse(0);
 
                 if (id != 0) {
                     eliminarFactura(id);
@@ -245,6 +222,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
             if (validarProducto(txtNombre.getText())) {
                 modeloFacturas.agregar(partida);
+                
+                PartidaClass nuevaPartida = new PartidaClass();
+                
+                nuevaPartida.nombre_articulo = txtNombre.getText();
+                nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
+                nuevaPartida.precio =  Double.parseDouble(txtPrecio.getText());
+                
+                factura.partidas.add(nuevaPartida);
+
                 limpiarTxtsPartida();
             } else {
                 JOptionPane.showMessageDialog(this, "Ese articulo ya esta registrado");
@@ -272,10 +258,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onModeloFacturasModificado(TableModelEvent evt) {
         int rowIndex = evt.getFirstRow();
         int colIndex = evt.getColumn();
-
+        
         switch (evt.getType()) {
             case TableModelEvent.UPDATE:
-
+                boolean opc = false;
+                
                 if (colIndex == 0) {
                     String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
                     if (nombreArticulo.isEmpty()) {
@@ -290,7 +277,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                                         JOptionPane.showMessageDialog(this, "El articulos ya esta registrado");
                                         modeloFacturas.setValueAt("NOMBRE NO VALIDO", evt.getFirstRow(), 0);
                                         break;
-
+                                    }else{
+                                        opc = true;
                                     }
                                 }
                             }
@@ -309,6 +297,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else if (cantidad <= 0) {
                         JOptionPane.showMessageDialog(this, "La cantidad deve ser mayor a 0");
                         modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
+                    }else{
+                        opc = true;
                     }
                 }
 
@@ -322,15 +312,48 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else if (precio < 0.1) {
                         JOptionPane.showMessageDialog(this, "El precio deve ser mayora a 0.1");
                         modeloFacturas.setValueAt(1.0, evt.getFirstRow(), 2);
+                    }else{
+                        opc = true;
                     }
                 }
+                
+                
+                if(opc == true){
+                     String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
+                     Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
+                     Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
+                     
+                     PartidaClass partidaNueva = new PartidaClass();
+                     
+                     partidaNueva.nombre_articulo = nombreArticulo;
+                     partidaNueva.cantidad = cantidad;
+                     partidaNueva.precio = precio;
+                    
+                     factura.partidas.set(rowIndex, partidaNueva); 
+                }
+                
+             
+                
+                PartidaClass nuevaPartida = new PartidaClass();
+                
+                nuevaPartida.nombre_articulo = txtNombre.getText();
+                nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
+                nuevaPartida.precio =  Double.parseDouble(txtPrecio.getText());
+                
+                factura.partidas.add(nuevaPartida);
+                
+                
+                
+                
+                
+                
 
                 break;
             case TableModelEvent.DELETE:
 
-                if (partidasId.isEmpty() == false) {
-                    if (rowIndex <= partidasId.size()) {
-                        partidasId.remove(rowIndex);
+                if (factura.partidas.isEmpty() == false) {
+                    if (rowIndex <= factura.partidas.size()) {
+                        factura.partidas.remove(rowIndex);
                     }
                 }
 
@@ -345,42 +368,42 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     //*****************************API*****************************
-    private List<ClientePojo> getClientes() throws Exception {
+    private List<ClienteClass> getClientes() throws Exception {
         String url = "http://localhost:8080/clientes";
 
-        ClientePojo[] clientesArray = restTemplate.getForObject(url, ClientePojo[].class);
-        List<ClientePojo> clientes = Arrays.asList(clientesArray);
+        ClienteClass[] clientesArray = restTemplate.getForObject(url, ClienteClass[].class);
+        List<ClienteClass> clientes = Arrays.asList(clientesArray);
 
         return clientes;
     }
 
-    private List<FacturaConsulta> getFacturas() throws Exception {
+    private List<FacturaClass> getFacturas() throws Exception {
         String url = "http://localhost:8080/facturas";
 
-        FacturaConsulta[] facturasArray = restTemplate.getForObject(url, FacturaConsulta[].class);
-        List<FacturaConsulta> facturas = Arrays.asList(facturasArray);
+        FacturaClass[] facturasArray = restTemplate.getForObject(url, FacturaClass[].class);
+        List<FacturaClass> facturas = Arrays.asList(facturasArray);
 
         return facturas;
     }
 
-    private FacturaConsulta getFactura(Integer id) throws Exception {
+    private FacturaClass getFactura(Integer id) throws Exception {
         String url = "http://localhost:8080/facturas/" + id;
 
-        FacturaConsulta factura = restTemplate.getForObject(url, FacturaConsulta.class);
+        FacturaClass factura = restTemplate.getForObject(url, FacturaClass.class);
 
         return factura;
     }
 
-    private void guardarFactura(String folio, Integer id, List<PartidaGuardar> partidas) throws Exception {
+    private void guardarFactura(String folio, Integer id, List<PartidaClass> partidas) throws Exception {
         String url = "http://localhost:8080/facturas";
 
-        FacturaGuardar facturaNueva = new FacturaGuardar();
+        FacturaClass facturaNueva = new FacturaClass();
         facturaNueva.folio = folio;
         facturaNueva.cliente_id = id;
         facturaNueva.partidas = partidas;
 
-        HttpEntity<FacturaGuardar> request = new HttpEntity<>(facturaNueva);
-        ResponseEntity<FacturaGuardar> response = restTemplate.exchange(url, HttpMethod.POST, request, FacturaGuardar.class);
+        HttpEntity<FacturaClass> request = new HttpEntity<>(facturaNueva);
+        ResponseEntity<FacturaClass> response = restTemplate.exchange(url, HttpMethod.POST, request, FacturaClass.class);
 
         if (response.getStatusCode() == HttpStatus.OK) {
             JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
@@ -391,45 +414,31 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         String url = "http://localhost:8080/facturas/" + id;
         restTemplate.delete(url);
     }
-
-    private void actualizarFactura(Integer id, List<PartidaGuardar> partidas) throws Exception {
+    
+    private void actualizarFactura(Integer id, List<PartidaClass> partidas) throws Exception {
         String url = "http://localhost:8080/facturas/" + id;
-
-        FacturaGuardar factura = new FacturaGuardar();
-
-        String folio = txtFolio.getText();
-        String codigo = txtCodigo.getText();
-
-        factura.folio = folio;
-        List<ClientePojo> clientes = getClientes();
-        int idCliente = 0;
-        for (int i = 0; i < clientes.size(); i++) {
-            ClientePojo cliente = clientes.get(i);
-            if (cliente.codigo.equals(codigo)) {
-                idCliente = Math.toIntExact(cliente.id);
-            }
-        }
-
-        factura.cliente_id = idCliente;
-        factura.partidas = partidas;
-
+        
+//        FacturaClass factura = new FacturaClass();
+//
+//        List<PartidaClass> partidasFinales = new ArrayList<>();
 //        for (int i = 0; i < partidas.size(); i++) {
-//            JSONObject partidaJson = new JSONObject();
-//            Partida partida = (Partida) partidas.get(i);
-//
+//            PartidaClass partidatemp = partidas.get(i);
+//            PartidaClass partidatempd = new PartidaClass();
 //            if (i < partidasId.size()) {
-//                partidaJson.put("id", partidasId.get(i));
+//                partidatempd.id = partidasId.get(i);
 //            }
-//
-//            partidaJson.put("nombre_articulo", (String) partida.nombreArticulo);
-//            partidaJson.put("cantidad", (Integer) partida.cantidad);
-//            partidaJson.put("precio", (Double) partida.precio);
-//            partidasJson.put(partidaJson);
+//                partidatempd.nombre_articulo = partidatemp.nombre_articulo;
+//                partidatempd.cantidad = partidatemp.cantidad;
+//                partidatempd.precio = partidatemp.precio;
+//  
+//            partidasFinales.add(partidatempd);
 //        }
 
-        HttpEntity<FacturaGuardar> request = new HttpEntity<>(factura);
 
-        ResponseEntity<FacturaGuardar> response = restTemplate.exchange(url, HttpMethod.PUT, request, FacturaGuardar.class);
+//        factura.partidas = partidasFinales;
+        HttpEntity<FacturaClass> request = new HttpEntity<>(factura);
+
+        ResponseEntity<FacturaClass> response = restTemplate.exchange(url, HttpMethod.PUT, request, FacturaClass.class);
 
         if (response.getStatusCode() == HttpStatus.OK) {
             System.out.println("Factura actualizada exitosamente");
@@ -438,7 +447,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    private void llenarTabla(FacturaConsulta factura) {
+    private void llenarTabla(FacturaClass factura) {
         lblSubtotal.setText(factura.subtotal.toString());
         lblTotalIva.setText(factura.total.toString());
         lblFolio.setText(factura.folio);
@@ -447,10 +456,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         lblFecha.setText(fecha);
 
         try {
-            List<ClientePojo> clientes = getClientes();
-
+            List<ClienteClass> clientes = getClientes();
+//            Integer codigo = clientes.stream().filter(cliente -> cliente.id.equals(factura.cliente_id)).mapToInt(cliente -> Math.toIntExact(cliente.id)).findFirst().orElse(0);
+//            
+//            txtCodigo.setText(codigo.toString());
+            
             for (int i = 0; i < clientes.size(); i++) {
-                ClientePojo cliente = clientes.get(i);
+                ClienteClass cliente = clientes.get(i);
 
                 if ((factura.cliente_id.equals(Math.toIntExact(cliente.id)))) {
                     txtCodigo.setText(cliente.codigo);
@@ -462,7 +474,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
 
         for (int j = 0; j < factura.partidas.size(); j++) {
-            PartidaConsulta partida = factura.partidas.get(j);
+            PartidaClass partida = factura.partidas.get(j);
 
             Partida partidag = new Partida();
 
@@ -476,21 +488,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         modeloFacturas.fireTableDataChanged();
     }
 
-    private void getIdPartidas(FacturaConsulta factura) {
-        partidasId.clear();
+    private List<PartidaClass> getPartidas() {
 
-        for (int i = 0; i < factura.partidas.size(); i++) {
-            PartidaConsulta partida = factura.partidas.get(i);
-            partidasId.add(Math.toIntExact(partida.id));
-        }
-    }
-
-    private List<PartidaGuardar> getPartidas() {
-
-        List<PartidaGuardar> partidas = new ArrayList<>();
+        List<PartidaClass> partidas = new ArrayList<>();
 
         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
-            PartidaGuardar partida = new PartidaGuardar();
+            PartidaClass partida = new PartidaClass();
 
             partida.nombre_articulo = (String) modeloFacturas.getValueAt(i, 0);
             partida.cantidad = (Integer) modeloFacturas.getValueAt(i, 1);
@@ -571,7 +574,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 String ultimoFolio = "";
 
-                List<FacturaConsulta> facturas = getFacturas();
+                List<FacturaClass> facturas = getFacturas();
 
                 if (facturas.isEmpty()) {
                     if (folio.equalsIgnoreCase("F-001")) {
@@ -584,7 +587,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 } else {
                     Integer ultimo = facturas.size() - 1;
-                    FacturaConsulta factura = facturas.get(ultimo);
+                    FacturaClass factura = facturas.get(ultimo);
                     ultimoFolio = factura.folio;
 
                     Integer ultimoNumeracion = getNumeracionFolio(ultimoFolio);
@@ -789,26 +792,24 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             String folio = txtFolio.getText();
 
             try {
-                List<FacturaConsulta> facturas = getFacturas();
-                Integer id = 0;
-                for (int i = 0; i < facturas.size(); i++) {
-                    FacturaConsulta factura = facturas.get(i);
-                    if (factura.folio.equals(folio)) {
-                        id = Math.toIntExact(factura.id);
-                    }
-                }
-                if (validarTxtFolio()) {
+                List<FacturaClass> facturas = getFacturas();
+                int id = facturas.stream()
+                        .filter(factura -> factura.folio.equals(folio))
+                        .mapToInt(factura -> Math.toIntExact(factura.id))
+                        .findFirst()
+                        .orElse(0);
 
+                if (validarTxtFolio()) {
                     if (id != 0) {
-                        llenarTabla(getFactura(id));
-                        getIdPartidas(getFactura(id));
+                        factura = getFactura(id);
+                        llenarTabla(factura);
+                      
                     } else {
                         if (validarFolio(folio)) {
                             lblFolio.setText(folio);
-
                             String fecha = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
-
                             lblFecha.setText(fecha);
+                            
                             txtCodigo.requestFocus();
                         }
                     }
@@ -837,14 +838,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                     if (validarCodigo(codigo)) {
 
-                        List<ClientePojo> clientes = getClientes();
-                        int idCliente = 0;
-                        for (int i = 0; i < clientes.size(); i++) {
-                            ClientePojo cliente = clientes.get(i);
-                            if (cliente.codigo.equals(codigo)) {
-                                idCliente = Math.toIntExact(cliente.id);
-                            }
-                        }
+                        List<ClienteClass> clientes = getClientes();
+
+                        int idCliente = clientes.stream()
+                                .filter(cliente -> cliente.codigo.equals(codigo))
+                                .mapToInt(cliente -> Math.toIntExact(cliente.id))
+                                .findFirst()
+                                .orElse(0);
 
                         if (idCliente == 0) {
                             JOptionPane.showMessageDialog(this, "No existe un cliente con ese codigo");
