@@ -222,13 +222,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
             if (validarProducto(txtNombre.getText())) {
                 modeloFacturas.agregar(partida);
-                
+
                 PartidaClass nuevaPartida = new PartidaClass();
-                
+
                 nuevaPartida.nombre_articulo = txtNombre.getText();
                 nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
-                nuevaPartida.precio =  Double.parseDouble(txtPrecio.getText());
-                
+                nuevaPartida.precio = Double.parseDouble(txtPrecio.getText());
+
                 factura.partidas.add(nuevaPartida);
 
                 limpiarTxtsPartida();
@@ -258,11 +258,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onModeloFacturasModificado(TableModelEvent evt) {
         int rowIndex = evt.getFirstRow();
         int colIndex = evt.getColumn();
-        
+
         switch (evt.getType()) {
             case TableModelEvent.UPDATE:
                 boolean opc = false;
-                
+
                 if (colIndex == 0) {
                     String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
                     if (nombreArticulo.isEmpty()) {
@@ -277,7 +277,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                                         JOptionPane.showMessageDialog(this, "El articulos ya esta registrado");
                                         modeloFacturas.setValueAt("NOMBRE NO VALIDO", evt.getFirstRow(), 0);
                                         break;
-                                    }else{
+                                    } else {
                                         opc = true;
                                     }
                                 }
@@ -297,7 +297,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else if (cantidad <= 0) {
                         JOptionPane.showMessageDialog(this, "La cantidad deve ser mayor a 0");
                         modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
-                    }else{
+                    } else {
                         opc = true;
                     }
                 }
@@ -312,41 +312,24 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else if (precio < 0.1) {
                         JOptionPane.showMessageDialog(this, "El precio deve ser mayora a 0.1");
                         modeloFacturas.setValueAt(1.0, evt.getFirstRow(), 2);
-                    }else{
+                    } else {
                         opc = true;
                     }
                 }
-                
-                
-                if(opc == true){
-                     String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
-                     Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
-                     Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
-                     
-                     PartidaClass partidaNueva = new PartidaClass();
-                     
-                     partidaNueva.nombre_articulo = nombreArticulo;
-                     partidaNueva.cantidad = cantidad;
-                     partidaNueva.precio = precio;
-                    
-                     factura.partidas.set(rowIndex, partidaNueva); 
+
+                if (opc == true) {
+                    String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
+                    Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
+                    Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
+
+                    PartidaClass partidaNueva = factura.partidas.get(rowIndex);
+
+                    partidaNueva.nombre_articulo = nombreArticulo;
+                    partidaNueva.cantidad = cantidad;
+                    partidaNueva.precio = precio;
+
+                    factura.partidas.set(rowIndex, partidaNueva);
                 }
-                
-             
-                
-                PartidaClass nuevaPartida = new PartidaClass();
-                
-                nuevaPartida.nombre_articulo = txtNombre.getText();
-                nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
-                nuevaPartida.precio =  Double.parseDouble(txtPrecio.getText());
-                
-                factura.partidas.add(nuevaPartida);
-                
-                
-                
-                
-                
-                
 
                 break;
             case TableModelEvent.DELETE:
@@ -414,28 +397,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         String url = "http://localhost:8080/facturas/" + id;
         restTemplate.delete(url);
     }
-    
+
     private void actualizarFactura(Integer id, List<PartidaClass> partidas) throws Exception {
         String url = "http://localhost:8080/facturas/" + id;
-        
-//        FacturaClass factura = new FacturaClass();
-//
-//        List<PartidaClass> partidasFinales = new ArrayList<>();
-//        for (int i = 0; i < partidas.size(); i++) {
-//            PartidaClass partidatemp = partidas.get(i);
-//            PartidaClass partidatempd = new PartidaClass();
-//            if (i < partidasId.size()) {
-//                partidatempd.id = partidasId.get(i);
-//            }
-//                partidatempd.nombre_articulo = partidatemp.nombre_articulo;
-//                partidatempd.cantidad = partidatemp.cantidad;
-//                partidatempd.precio = partidatemp.precio;
-//  
-//            partidasFinales.add(partidatempd);
-//        }
 
-
-//        factura.partidas = partidasFinales;
         HttpEntity<FacturaClass> request = new HttpEntity<>(factura);
 
         ResponseEntity<FacturaClass> response = restTemplate.exchange(url, HttpMethod.PUT, request, FacturaClass.class);
@@ -460,7 +425,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 //            Integer codigo = clientes.stream().filter(cliente -> cliente.id.equals(factura.cliente_id)).mapToInt(cliente -> Math.toIntExact(cliente.id)).findFirst().orElse(0);
 //            
 //            txtCodigo.setText(codigo.toString());
-            
+
             for (int i = 0; i < clientes.size(); i++) {
                 ClienteClass cliente = clientes.get(i);
 
@@ -485,7 +450,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             modeloFacturas.agregar(partidag);
         }
 
-        modeloFacturas.fireTableDataChanged();
     }
 
     private List<PartidaClass> getPartidas() {
@@ -803,13 +767,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     if (id != 0) {
                         factura = getFactura(id);
                         llenarTabla(factura);
-                      
                     } else {
                         if (validarFolio(folio)) {
                             lblFolio.setText(folio);
                             String fecha = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
                             lblFecha.setText(fecha);
-                            
+
                             txtCodigo.requestFocus();
                         }
                     }
@@ -938,7 +901,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private void limpiarTabla() {
         modeloFacturas.partidas.clear();
-        modeloFacturas.fireTableDataChanged();
         txtFolio.requestFocus();
     }
 
