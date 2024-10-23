@@ -82,7 +82,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private static class PartidaClass implements Serializable {
-
         public Long id;
         public String nombre_articulo;
         public Integer cantidad;
@@ -92,7 +91,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class FacturaClass implements Serializable {
-
         public Long id;
         public String folio;
         public Date fecha_expedicion;
@@ -104,7 +102,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     public static class ClienteClass implements Serializable {
-
         public Long id;
         public String codigo;
         public String nombre;
@@ -112,7 +109,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         public String direccion;
     }
 
-    List<Long> partidasId = new ArrayList<>();
     RestTemplate restTemplate = new RestTemplate();
     FacturaClass factura = new FacturaClass();
 
@@ -130,15 +126,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         txtNombre.requestFocus();
                     } else {
 
-                        List<FacturaClass> facturas = getFacturas();
-                        //anyMatch(predicado -> predicado) devuelve true o false si alguno de los elementos coinside          
+                        List<FacturaClass> facturas = getFacturas(); 
                         boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
 
                         if (existenciaFactura == false) {
 
-                            List<ClienteClass> clientes = getClientes();
-                            //filter (predicado -> predicado) filatra elementos que coinsidan con el predicado
-                            //findFirst() devuelve el primer elemento del steam 
+                            List<ClienteClass> clientes = getClientes(); 
                             int idCliente = clientes.stream().filter(cliente -> cliente.codigo.equals(codigo))
                                     .mapToInt(cliente -> Math.toIntExact(cliente.id))
                                     .findFirst()
@@ -154,16 +147,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             }
 
                         } else {
-                            Integer idFactura = 0;
-                            for (int i = 0; i < facturas.size(); i++) {
-                                FacturaClass factura = facturas.get(i);
-                                if (factura.folio.equals(folio)) {
-                                    idFactura = Math.toIntExact(factura.id);
-                                }
-                            }
-
                             if (validarProducto("NOMBRE NO VALIDO")) {
-                                actualizarFactura(idFactura);
+                                actualizarFactura();
                                 limpiarTodo();
                                 JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + folio);
 
@@ -178,7 +163,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             }
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "No se pudo actualizar la factura. Verifique su conexión. Detalles: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "No se pudo actualizar la factura. Verifique su conexión");
         }
     }
 
@@ -338,6 +323,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
                 break;
+                
             case TableModelEvent.DELETE:
 
                 if (factura.partidas != null) {
@@ -401,8 +387,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         restTemplate.delete(url);
     }
 
-    private void actualizarFactura(Integer id) throws Exception {
-        String url = "http://localhost:8080/facturas/" + id;
+    private void actualizarFactura() throws Exception {
+        String url = "http://localhost:8080/facturas/" + factura.id;
 
         HttpEntity<FacturaClass> request = new HttpEntity<>(factura);
 
@@ -425,10 +411,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         try {
             List<ClienteClass> clientes = getClientes();
-//            Integer codigo = clientes.stream().filter(cliente -> cliente.id.equals(factura.cliente_id)).mapToInt(cliente -> Math.toIntExact(cliente.id)).findFirst().orElse(0);
-//            
-//            txtCodigo.setText(codigo.toString());
-
             for (int i = 0; i < clientes.size(); i++) {
                 ClienteClass cliente = clientes.get(i);
 
@@ -835,7 +817,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
             evt.consume();
         }
-        if (txtFolio.getText().isEmpty()) {
+
             if (txtFolio.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
                 evt.consume();
@@ -845,7 +827,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 evt.consume();
                 txtCodigo.requestFocus();
             }
-        }
+   
 
     }
 
@@ -855,7 +837,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if (c < '0' || c > '9') {
             evt.consume();
         }
-        if (txtFolio.getText().isEmpty()) {
+
             if (txtFolio.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
                 evt.consume();
@@ -865,7 +847,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 evt.consume();
                 txtCodigo.requestFocus();
             }
-        }
+        
     }
 
     private void txtPrecioKeyTyped(KeyEvent evt) {
@@ -874,7 +856,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if ((c < '0' || c > '9') && (c != '.')) {
             evt.consume();
         }
-        if (lblFolio.getText().isEmpty()) {
             if (txtFolio.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
                 evt.consume();
@@ -884,9 +865,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 evt.consume();
                 txtCodigo.requestFocus();
             }
-
-        }
-
     }
 
     private void limpiarTxtsPartida() {
