@@ -163,7 +163,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             }
 
                             if (validarProducto("NOMBRE NO VALIDO")) {
-                                actualizarFactura(idFactura, getPartidas());
+                                actualizarFactura(idFactura);
                                 limpiarTodo();
                                 JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + folio);
 
@@ -223,14 +223,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             if (validarProducto(txtNombre.getText())) {
                 modeloFacturas.agregar(partida);
 
-                PartidaClass nuevaPartida = new PartidaClass();
+                if (factura.partidas != null) {
+                    PartidaClass nuevaPartida = new PartidaClass();
 
-                nuevaPartida.nombre_articulo = txtNombre.getText();
-                nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
-                nuevaPartida.precio = Double.parseDouble(txtPrecio.getText());
+                    nuevaPartida.nombre_articulo = txtNombre.getText();
+                    nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
+                    nuevaPartida.precio = Double.parseDouble(txtPrecio.getText());
 
-                factura.partidas.add(nuevaPartida);
-
+                    factura.partidas.add(nuevaPartida);
+                }
                 limpiarTxtsPartida();
             } else {
                 JOptionPane.showMessageDialog(this, "Ese articulo ya esta registrado");
@@ -318,28 +319,34 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
                 if (opc == true) {
-                    String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
-                    Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
-                    Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
 
-                    PartidaClass partidaNueva = factura.partidas.get(rowIndex);
+                    if (factura.partidas != null) {
+                        if (factura.partidas.isEmpty() == false) {
+                            String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
+                            Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
+                            Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
 
-                    partidaNueva.nombre_articulo = nombreArticulo;
-                    partidaNueva.cantidad = cantidad;
-                    partidaNueva.precio = precio;
+                            PartidaClass partidaNueva = factura.partidas.get(rowIndex);
 
-                    factura.partidas.set(rowIndex, partidaNueva);
+                            partidaNueva.nombre_articulo = nombreArticulo;
+                            partidaNueva.cantidad = cantidad;
+                            partidaNueva.precio = precio;
+
+                            factura.partidas.set(rowIndex, partidaNueva);
+                        }
+                    }
                 }
 
                 break;
             case TableModelEvent.DELETE:
 
-                if (factura.partidas.isEmpty() == false) {
-                    if (rowIndex <= factura.partidas.size()) {
-                        factura.partidas.remove(rowIndex);
+                if (factura.partidas != null) {
+                    if (factura.partidas.isEmpty() == false) {
+                        if (rowIndex <= factura.partidas.size()) {
+                            factura.partidas.remove(rowIndex);
+                        }
                     }
                 }
-
                 break;
         }
         txtNombre.requestFocus();
@@ -387,10 +394,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         HttpEntity<FacturaClass> request = new HttpEntity<>(facturaNueva);
         ResponseEntity<FacturaClass> response = restTemplate.exchange(url, HttpMethod.POST, request, FacturaClass.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
-        }
     }
 
     private void eliminarFactura(Integer id) throws Exception {
@@ -398,7 +401,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         restTemplate.delete(url);
     }
 
-    private void actualizarFactura(Integer id, List<PartidaClass> partidas) throws Exception {
+    private void actualizarFactura(Integer id) throws Exception {
         String url = "http://localhost:8080/facturas/" + id;
 
         HttpEntity<FacturaClass> request = new HttpEntity<>(factura);
@@ -774,6 +777,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             lblFecha.setText(fecha);
 
                             txtCodigo.requestFocus();
+
                         }
                     }
 
@@ -901,6 +905,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private void limpiarTabla() {
         modeloFacturas.partidas.clear();
+        modeloFacturas.fireTableDataChanged();
         txtFolio.requestFocus();
     }
 
