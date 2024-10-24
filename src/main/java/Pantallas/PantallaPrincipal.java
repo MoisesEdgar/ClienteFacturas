@@ -1,11 +1,14 @@
-package com.mycompany.clientefacturas;
+package Pantallas;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import APIS.FacturaAPI;
+import APIS.ClienteAPI;
+import DTO.ClienteDTO;
+import DTO.FacturaDTO;
+import DTO.PartidaDTO;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,13 +18,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 public class PantallaPrincipal extends javax.swing.JFrame {
@@ -81,46 +78,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         });
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private static class PartidaClass implements Serializable {
-
-        public Long id;
-        public String nombre_articulo;
-        public Integer cantidad;
-        public Double precio;
-        public Long factura_id;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class FacturaClass implements Serializable {
-
-        public Long id;
-        public String folio;
-        public Date fecha_expedicion;
-        public Double subtotal;
-        public Double total;
-        public Integer cliente_id;
-        public List<PartidaClass> partidas;
-
-    }
-
-    public static class ClienteClass implements Serializable {
-
-        public Long id;
-        public String codigo;
-        public String nombre;
-        public String telefono;
-        public String direccion;
-    }
-
     RestTemplate restTemplate = new RestTemplate();
-    FacturaClass factura = new FacturaClass();
+    FacturaDTO factura = new FacturaDTO();
+    ClienteAPI peticionCliente = new ClienteAPI();
+    FacturaAPI peticionFactura = new FacturaAPI();
 
     //*****************************BOTONES*****************************
     private void onButonGuardarFacturaClicked(ActionEvent evt) {
         String folio = txtFolio.getText();
         String codigo = txtCodigo.getText();
-        List<PartidaClass> partidas = getPartidas();
+        List<PartidaDTO> partidas = getPartidas();
 
         try {
             if (validarTxtFolio()) {
@@ -130,19 +97,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         txtNombre.requestFocus();
                     } else {
 
-                        List<FacturaClass> facturas = getFacturas();
+                        List<FacturaDTO> facturas = peticionFactura.getFacturas();
                         boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
 
                         if (existenciaFactura == false) {
 
-                            List<ClienteClass> clientes = getClientes();
+                            List<ClienteDTO> clientes = peticionFactura.getClientes();
                             int idCliente = clientes.stream().filter(cliente -> cliente.codigo.equals(codigo))
                                     .mapToInt(cliente -> Math.toIntExact(cliente.id))
                                     .findFirst()
                                     .orElse(0);
 
                             if (validarProducto("NOMBRE NO VALIDO")) {
-                                guardarFactura(folio, idCliente, getPartidas());
+                                peticionFactura.guardarFactura(folio, idCliente, getPartidas());
                                 limpiarTodo();
                                 JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
 
@@ -152,7 +119,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                         } else {
                             if (validarProducto("NOMBRE NO VALIDO")) {
-                                actualizarFactura();
+                                peticionFactura.actualizarFactura(factura);
                                 limpiarTodo();
                                 JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + folio);
 
@@ -179,14 +146,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         } else {
             try {
 
-                List<FacturaClass> facturas = getFacturas();
+                List<FacturaDTO> facturas = peticionFactura.getFacturas();
                 int id = facturas.stream()
                         .filter(factura -> factura.folio.equals(folio))
                         .mapToInt(factura -> Math.toIntExact(factura.id))
                         .findFirst().orElse(0);
 
                 if (id != 0) {
-                    eliminarFactura(id);
+                    peticionFactura.eliminarFactura(id);
                     JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
                     limpiarTodo();
                 } else {
@@ -213,7 +180,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 modeloFacturas.agregar(partida);
 
                 if (factura.partidas != null) {
-                    PartidaClass nuevaPartida = new PartidaClass();
+                    PartidaDTO nuevaPartida = new PartidaDTO();
 
                     nuevaPartida.nombre_articulo = txtNombre.getText();
                     nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
@@ -315,7 +282,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
                             Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
 
-                            PartidaClass partidaNueva = factura.partidas.get(rowIndex);
+                            PartidaDTO partidaNueva = factura.partidas.get(rowIndex);
 
                             partidaNueva.nombre_articulo = nombreArticulo;
                             partidaNueva.cantidad = cantidad;
@@ -347,64 +314,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         limpiarTodo();
     }
 
-    //*****************************API*****************************
-    private List<ClienteClass> getClientes() throws Exception {
-        String url = "http://localhost:8080/clientes";
-
-        ClienteClass[] clientesArray = restTemplate.getForObject(url, ClienteClass[].class);
-        List<ClienteClass> clientes = Arrays.asList(clientesArray);
-
-        return clientes;
-    }
-
-    private List<FacturaClass> getFacturas() throws Exception {
-        String url = "http://localhost:8080/facturas";
-
-        FacturaClass[] facturasArray = restTemplate.getForObject(url, FacturaClass[].class);
-        List<FacturaClass> facturas = Arrays.asList(facturasArray);
-
-        return facturas;
-    }
-
-    private FacturaClass getFactura(Integer id) throws Exception {
-        String url = "http://localhost:8080/facturas/" + id;
-
-        FacturaClass factura = restTemplate.getForObject(url, FacturaClass.class);
-
-        return factura;
-    }
-
-    private void guardarFactura(String folio, Integer id, List<PartidaClass> partidas) throws Exception {
-        String url = "http://localhost:8080/facturas";
-
-        FacturaClass facturaNueva = new FacturaClass();
-        facturaNueva.folio = folio;
-        facturaNueva.cliente_id = id;
-        facturaNueva.partidas = partidas;
-
-        HttpEntity<FacturaClass> request = new HttpEntity<>(facturaNueva);
-        ResponseEntity<FacturaClass> response = restTemplate.exchange(url, HttpMethod.POST, request, FacturaClass.class);
-    }
-
-    private void eliminarFactura(Integer id) throws Exception {
-        String url = "http://localhost:8080/facturas/" + id;
-        restTemplate.delete(url);
-    }
-
-    private void actualizarFactura() throws Exception {
-        String url = "http://localhost:8080/facturas/" + factura.id;
-
-        HttpEntity<FacturaClass> request = new HttpEntity<>(factura);
-        ResponseEntity<FacturaClass> response = restTemplate.exchange(url, HttpMethod.PUT, request, FacturaClass.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            System.out.println("Factura actualizada exitosamente");
-        } else {
-            System.out.println("Error al actualizar factura. Código de respuesta: " + response.getStatusCode());
-        }
-    }
-
-    private void llenarTabla(FacturaClass factura) {
+    private void llenarTabla(FacturaDTO factura) {
         lblSubtotal.setText(factura.subtotal.toString());
         lblTotalIva.setText(factura.total.toString());
         lblFolio.setText(factura.folio);
@@ -413,7 +323,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         lblFecha.setText(fecha);
 
         try {
-            List<ClienteClass> clientes = getClientes();
+            List<ClienteDTO> clientes = peticionCliente.getClientes();
             clientes.stream()
                     .filter(cliente -> factura.cliente_id.equals(Math.toIntExact(cliente.id)))
                     .findFirst()
@@ -423,7 +333,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         }
 
         for (int j = 0; j < factura.partidas.size(); j++) {
-            PartidaClass partida = factura.partidas.get(j);
+            PartidaDTO partida = factura.partidas.get(j);
 
             Partida partidasMostrar = new Partida();
 
@@ -436,12 +346,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
-    private List<PartidaClass> getPartidas() {
+    private List<PartidaDTO> getPartidas() {
 
-        List<PartidaClass> partidas = new ArrayList<>();
+        List<PartidaDTO> partidas = new ArrayList<>();
 
         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
-            PartidaClass partida = new PartidaClass();
+            PartidaDTO partida = new PartidaDTO();
 
             partida.nombre_articulo = (String) modeloFacturas.getValueAt(i, 0);
             partida.cantidad = (Integer) modeloFacturas.getValueAt(i, 1);
@@ -522,7 +432,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 String ultimoFolio = "";
 
-                List<FacturaClass> facturas = getFacturas();
+                List<FacturaDTO> facturas = peticionFactura.getFacturas();
 
                 if (facturas.isEmpty()) {
                     if (folio.equalsIgnoreCase("F-001")) {
@@ -535,7 +445,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 } else {
                     Integer ultimo = facturas.size() - 1;
-                    FacturaClass factura = facturas.get(ultimo);
+                    FacturaDTO factura = facturas.get(ultimo);
                     ultimoFolio = factura.folio;
 
                     Integer ultimoNumeracion = getNumeracionFolio(ultimoFolio);
@@ -742,7 +652,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             try {
 
                 if (validarTxtFolio()) {
-                    List<FacturaClass> facturas = getFacturas();
+                    
+                    List<FacturaDTO> facturas = peticionFactura.getFacturas();
                     int id = facturas.stream()
                             .filter(factura -> factura.folio.equals(folio))
                             .mapToInt(factura -> Math.toIntExact(factura.id))
@@ -750,7 +661,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             .orElse(0);
                     
                     if (id != 0) {
-                        factura = getFactura(id);
+                        factura = peticionFactura.getFactura(id);
                         llenarTabla(factura);
                     } else {
                         if (validarFolio(folio)) {
@@ -787,7 +698,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                     if (validarCodigo(codigo)) {
 
-                        List<ClienteClass> clientes = getClientes();
+                        List<ClienteDTO> clientes = peticionFactura.getClientes();
 
                         int idCliente = clientes.stream()
                                 .filter(cliente -> cliente.codigo.equals(codigo))

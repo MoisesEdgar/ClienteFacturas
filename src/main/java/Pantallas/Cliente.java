@@ -1,19 +1,15 @@
-package com.mycompany.clientefacturas;
-
+package Pantallas;
+import APIS.ClienteAPI;
+import DTO.ClienteDTO;
 import java.awt.event.ActionEvent;
-import java.io.Serializable;
-import java.util.Arrays;
 import java.util.List;
 import javax.swing.JOptionPane;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 public class Cliente extends javax.swing.JFrame {
 
     RestTemplate restTemplate = new RestTemplate();
+    ClienteAPI peticion = new ClienteAPI();
 
     public Cliente() {
         initComponents();
@@ -33,15 +29,6 @@ public class Cliente extends javax.swing.JFrame {
         });
     }
 
-    public static class ClientePojo implements Serializable {
-
-        public Long id;
-        public String codigo;
-        public String nombre;
-        public String telefono;
-        public String direccion; 
-    }
-
     private void onButonAgregarClicked(ActionEvent evt) {
         try {
             if (validarTxt()) {
@@ -49,54 +36,31 @@ public class Cliente extends javax.swing.JFrame {
                     String nombre = txtNombre.getText();
                     String telefono = txtTelefono.getText();
                     String direccion = txtDireccion.getText();
+                    
+                    String codigo = crearCodigo();
+                    peticion.guardarCliente(nombre, telefono, direccion, codigo);
+                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
 
-                    guardarCliente(nombre, telefono, direccion);
+                    
                     this.dispose();
                 }
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
         }
-    }
-
-    private List<ClientePojo> getClientes() throws Exception {
-        String url = "http://localhost:8080/clientes";
-
-        ClientePojo[] clientesArray = restTemplate.getForObject(url, ClientePojo[].class);
-        List<ClientePojo> clientes = Arrays.asList(clientesArray);
-
-        return clientes;
-    }
-
-    private void guardarCliente(String nombre, String telefono, String direccion) throws Exception {
-        String url = "http://localhost:8080/clientes";
-
-        String codigo = crearCodigo();
-        
-        ClientePojo clienteNuevo = new ClientePojo();
-        clienteNuevo.codigo = codigo;
-        clienteNuevo.nombre = nombre;
-        clienteNuevo.telefono = telefono;
-        clienteNuevo.direccion = direccion;
-
-        HttpEntity<ClientePojo> request = new HttpEntity<>(clienteNuevo);
-        ResponseEntity<ClientePojo> response = restTemplate.exchange(url, HttpMethod.POST, request, ClientePojo.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
-        }
-    }
+    }  
     
     private String crearCodigo() throws Exception {
         String codigoAnterior = "";
         String codigo = "C-";
-        List<ClientePojo> clientes = getClientes();
+       
+        List<ClienteDTO> clientes = peticion.getClientes();
      
         if (clientes.isEmpty()) {
             codigo = "C-001";
         } else {
          
-        for (ClientePojo cliente : clientes) {
+        for (ClienteDTO cliente : clientes) {
             codigoAnterior = cliente.codigo;
         }
            
@@ -116,8 +80,9 @@ public class Cliente extends javax.swing.JFrame {
     }
     
     private boolean clienteExistente() throws Exception {
-        List<ClientePojo> clientes = getClientes();
-        for (ClientePojo cliente : clientes) {
+        
+        List<ClienteDTO> clientes = peticion.getClientes();
+        for (ClienteDTO cliente : clientes) {
             if (cliente.nombre.equalsIgnoreCase(txtNombre.getText())) {
                 JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
                 txtNombre.setText("");
