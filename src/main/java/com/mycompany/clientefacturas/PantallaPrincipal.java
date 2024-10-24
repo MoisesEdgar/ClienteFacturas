@@ -1,6 +1,5 @@
 package com.mycompany.clientefacturas;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -741,14 +740,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             String folio = txtFolio.getText();
 
             try {
-                List<FacturaClass> facturas = getFacturas();
-                int id = facturas.stream()
-                        .filter(factura -> factura.folio.equals(folio))
-                        .mapToInt(factura -> Math.toIntExact(factura.id))
-                        .findFirst()
-                        .orElse(0);
 
                 if (validarTxtFolio()) {
+                    List<FacturaClass> facturas = getFacturas();
+                    int id = facturas.stream()
+                            .filter(factura -> factura.folio.equals(folio))
+                            .mapToInt(factura -> Math.toIntExact(factura.id))
+                            .findFirst()
+                            .orElse(0);
+                    
                     if (id != 0) {
                         factura = getFactura(id);
                         llenarTabla(factura);
