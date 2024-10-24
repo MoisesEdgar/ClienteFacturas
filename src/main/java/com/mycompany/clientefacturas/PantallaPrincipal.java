@@ -1,5 +1,6 @@
 package com.mycompany.clientefacturas;
 
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -58,6 +59,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 txtCodigoKeyPressed(evt);
             }
         });
+
         txtNombre.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent evt) {
@@ -82,6 +84,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private static class PartidaClass implements Serializable {
+
         public Long id;
         public String nombre_articulo;
         public Integer cantidad;
@@ -91,6 +94,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class FacturaClass implements Serializable {
+
         public Long id;
         public String folio;
         public Date fecha_expedicion;
@@ -102,6 +106,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     public static class ClienteClass implements Serializable {
+
         public Long id;
         public String codigo;
         public String nombre;
@@ -126,12 +131,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         txtNombre.requestFocus();
                     } else {
 
-                        List<FacturaClass> facturas = getFacturas(); 
+                        List<FacturaClass> facturas = getFacturas();
                         boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
 
                         if (existenciaFactura == false) {
 
-                            List<ClienteClass> clientes = getClientes(); 
+                            List<ClienteClass> clientes = getClientes();
                             int idCliente = clientes.stream().filter(cliente -> cliente.codigo.equals(codigo))
                                     .mapToInt(cliente -> Math.toIntExact(cliente.id))
                                     .findFirst()
@@ -323,7 +328,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
                 break;
-                
+
             case TableModelEvent.DELETE:
 
                 if (factura.partidas != null) {
@@ -391,7 +396,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         String url = "http://localhost:8080/facturas/" + factura.id;
 
         HttpEntity<FacturaClass> request = new HttpEntity<>(factura);
-
         ResponseEntity<FacturaClass> response = restTemplate.exchange(url, HttpMethod.PUT, request, FacturaClass.class);
 
         if (response.getStatusCode() == HttpStatus.OK) {
@@ -411,14 +415,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         try {
             List<ClienteClass> clientes = getClientes();
-            for (int i = 0; i < clientes.size(); i++) {
-                ClienteClass cliente = clientes.get(i);
-
-                if ((factura.cliente_id.equals(Math.toIntExact(cliente.id)))) {
-                    txtCodigo.setText(cliente.codigo);
-                    break;
-                }
-            }
+            clientes.stream()
+                    .filter(cliente -> factura.cliente_id.equals(Math.toIntExact(cliente.id)))
+                    .findFirst()
+                    .ifPresent(cliente -> txtCodigo.setText(cliente.codigo));
         } catch (Exception e) {
 
         }
@@ -426,13 +426,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         for (int j = 0; j < factura.partidas.size(); j++) {
             PartidaClass partida = factura.partidas.get(j);
 
-            Partida partidag = new Partida();
+            Partida partidasMostrar = new Partida();
 
-            partidag.nombreArticulo = partida.nombre_articulo;
-            partidag.cantidad = partida.cantidad;
-            partidag.precio = partida.precio;
+            partidasMostrar.nombreArticulo = partida.nombre_articulo;
+            partidasMostrar.cantidad = partida.cantidad;
+            partidasMostrar.precio = partida.precio;
 
-            modeloFacturas.agregar(partidag);
+            modeloFacturas.agregar(partidasMostrar);
         }
 
     }
@@ -818,17 +818,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             evt.consume();
         }
 
-            if (txtFolio.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-                evt.consume();
-                txtFolio.requestFocus();
-            } else if (txtCodigo.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-                evt.consume();
-                txtCodigo.requestFocus();
-            }
-   
-
+        if (txtFolio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+            evt.consume();
+            txtFolio.requestFocus();
+        } else if (txtCodigo.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+            evt.consume();
+            txtCodigo.requestFocus();
+        }
     }
 
     private void txtCantidadKeyTyped(KeyEvent evt) {
@@ -838,16 +836,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             evt.consume();
         }
 
-            if (txtFolio.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-                evt.consume();
-                txtFolio.requestFocus();
-            } else if (txtCodigo.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-                evt.consume();
-                txtCodigo.requestFocus();
-            }
-        
+        if (txtFolio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+            evt.consume();
+            txtFolio.requestFocus();
+        } else if (txtCodigo.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+            evt.consume();
+            txtCodigo.requestFocus();
+        }
+
     }
 
     private void txtPrecioKeyTyped(KeyEvent evt) {
@@ -856,15 +854,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if ((c < '0' || c > '9') && (c != '.')) {
             evt.consume();
         }
-            if (txtFolio.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-                evt.consume();
-                txtFolio.requestFocus();
-            } else if (txtCodigo.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-                evt.consume();
-                txtCodigo.requestFocus();
-            }
+        if (txtFolio.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
+            evt.consume();
+            txtFolio.requestFocus();
+        } else if (txtCodigo.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
+            evt.consume();
+            txtCodigo.requestFocus();
+        }
     }
 
     private void limpiarTxtsPartida() {
