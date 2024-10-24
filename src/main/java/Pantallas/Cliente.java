@@ -38,7 +38,7 @@ public class Cliente extends javax.swing.JFrame {
                     String direccion = txtDireccion.getText();
                     
                     String codigo = crearCodigo();
-                    peticion.guardarCliente(nombre, telefono, direccion, codigo);
+                    peticion.save(nombre, telefono, direccion, codigo);
                     JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
 
                     
@@ -54,7 +54,7 @@ public class Cliente extends javax.swing.JFrame {
         String codigoAnterior = "";
         String codigo = "C-";
        
-        List<ClienteDTO> clientes = peticion.getClientes();
+        List<ClienteDTO> clientes = peticion.getAll();
      
         if (clientes.isEmpty()) {
             codigo = "C-001";
@@ -81,7 +81,7 @@ public class Cliente extends javax.swing.JFrame {
     
     private boolean clienteExistente() throws Exception {
         
-        List<ClienteDTO> clientes = peticion.getClientes();
+        List<ClienteDTO> clientes = peticion.getAll();
         for (ClienteDTO cliente : clientes) {
             if (cliente.nombre.equalsIgnoreCase(txtNombre.getText())) {
                 JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");

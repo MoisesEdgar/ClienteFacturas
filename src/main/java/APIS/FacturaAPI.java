@@ -1,6 +1,5 @@
 package APIS;
 
-import DTO.ClienteDTO;
 import DTO.FacturaDTO;
 import DTO.PartidaDTO;
 import java.util.Arrays;
@@ -12,37 +11,23 @@ import org.springframework.web.client.RestTemplate;
 
 public class FacturaAPI {
 
-    RestTemplate restTemplate = new RestTemplate();
+    private  RestTemplate restTemplate = new RestTemplate();
+    private String url = "http://localhost:8080/facturas";
 
-    public List<ClienteDTO> getClientes() throws Exception {
-        String url = "http://localhost:8080/clientes";
-
-        ClienteDTO[] clientesArray = restTemplate.getForObject(url, ClienteDTO[].class);
-        List<ClienteDTO> clientes = Arrays.asList(clientesArray);
-
-        return clientes;
-    }
-
-    public List<FacturaDTO> getFacturas() throws Exception {
-        String url = "http://localhost:8080/facturas";
-
+    public List<FacturaDTO> getAll() throws Exception {
         FacturaDTO[] facturasArray = restTemplate.getForObject(url, FacturaDTO[].class);
         List<FacturaDTO> facturas = Arrays.asList(facturasArray);
-
+        
         return facturas;
     }
 
-    public FacturaDTO getFactura(Integer id) throws Exception {
-        String url = "http://localhost:8080/facturas/" + id;
-
-        FacturaDTO factura = restTemplate.getForObject(url, FacturaDTO.class);
-
+    public FacturaDTO getById(Integer id) throws Exception {
+        FacturaDTO factura = restTemplate.getForObject(url + "/" + id, FacturaDTO.class);
+        
         return factura;
     }
 
-    public void guardarFactura(String folio, Integer id, List<PartidaDTO> partidas) throws Exception {
-        String url = "http://localhost:8080/facturas";
-
+    public void save(String folio, Integer id, List<PartidaDTO> partidas) throws Exception {
         FacturaDTO facturaNueva = new FacturaDTO();
         facturaNueva.folio = folio;
         facturaNueva.cliente_id = id;
@@ -52,16 +37,12 @@ public class FacturaAPI {
         ResponseEntity<FacturaDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, FacturaDTO.class);
     }
 
-    public void eliminarFactura(Integer id) throws Exception {
-        String url = "http://localhost:8080/facturas/" + id;
-        restTemplate.delete(url);
+    public void delete(Integer id) throws Exception {
+        restTemplate.delete(url + "/" + id);
     }
 
-    public void actualizarFactura(FacturaDTO factura) throws Exception {
-        String url = "http://localhost:8080/facturas/" + factura.id;
-
+    public void update(FacturaDTO factura) throws Exception {
         HttpEntity<FacturaDTO> request = new HttpEntity<>(factura);
-        ResponseEntity<FacturaDTO> response = restTemplate.exchange(url, HttpMethod.PUT, request, FacturaDTO.class);
-
+        ResponseEntity<FacturaDTO> response = restTemplate.exchange(url + "/" + factura.id, HttpMethod.PUT, request, FacturaDTO.class);
     }
 }

@@ -10,20 +10,16 @@ import org.springframework.web.client.RestTemplate;
 
 public class ClienteAPI {
 
-    RestTemplate restTemplate = new RestTemplate();
+    private RestTemplate restTemplate = new RestTemplate();
+    private String url = "http://localhost:8080/clientes";
 
-    public List<ClienteDTO> getClientes() throws Exception {
-        String url = "http://localhost:8080/clientes";
-
+    public List<ClienteDTO> getAll() throws Exception {
         ClienteDTO[] clientesArray = restTemplate.getForObject(url, ClienteDTO[].class);
         List<ClienteDTO> clientes = Arrays.asList(clientesArray);
-
         return clientes;
     }
 
-    public void guardarCliente(String nombre, String telefono, String direccion, String codigo) throws Exception {
-        String url = "http://localhost:8080/clientes";
-
+    public void save(String nombre, String telefono, String direccion, String codigo) throws Exception {
         ClienteDTO clienteNuevo = new ClienteDTO();
         clienteNuevo.codigo = codigo;
         clienteNuevo.nombre = nombre;

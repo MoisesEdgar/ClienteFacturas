@@ -78,10 +78,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         });
     }
 
-    RestTemplate restTemplate = new RestTemplate();
-    FacturaDTO factura = new FacturaDTO();
-    ClienteAPI peticionCliente = new ClienteAPI();
-    FacturaAPI peticionFactura = new FacturaAPI();
+    private RestTemplate restTemplate = new RestTemplate();
+    private FacturaDTO factura = new FacturaDTO();
+    private ClienteAPI peticionCliente = new ClienteAPI();
+    private FacturaAPI peticionFactura = new FacturaAPI();
 
     //*****************************BOTONES*****************************
     private void onButonGuardarFacturaClicked(ActionEvent evt) {
@@ -97,19 +97,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         txtNombre.requestFocus();
                     } else {
 
-                        List<FacturaDTO> facturas = peticionFactura.getFacturas();
+                        List<FacturaDTO> facturas = peticionFactura.getAll();
                         boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
 
                         if (existenciaFactura == false) {
 
-                            List<ClienteDTO> clientes = peticionFactura.getClientes();
+                            List<ClienteDTO> clientes = peticionCliente.getAll();
                             int idCliente = clientes.stream().filter(cliente -> cliente.codigo.equals(codigo))
                                     .mapToInt(cliente -> Math.toIntExact(cliente.id))
                                     .findFirst()
                                     .orElse(0);
 
                             if (validarProducto("NOMBRE NO VALIDO")) {
-                                peticionFactura.guardarFactura(folio, idCliente, getPartidas());
+                                peticionFactura.save(folio, idCliente, getPartidas());
                                 limpiarTodo();
                                 JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
 
@@ -119,7 +119,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                         } else {
                             if (validarProducto("NOMBRE NO VALIDO")) {
-                                peticionFactura.actualizarFactura(factura);
+                                peticionFactura.update(factura);
                                 limpiarTodo();
                                 JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + folio);
 
@@ -146,14 +146,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         } else {
             try {
 
-                List<FacturaDTO> facturas = peticionFactura.getFacturas();
+                List<FacturaDTO> facturas = peticionFactura.getAll();
                 int id = facturas.stream()
                         .filter(factura -> factura.folio.equals(folio))
                         .mapToInt(factura -> Math.toIntExact(factura.id))
                         .findFirst().orElse(0);
 
                 if (id != 0) {
-                    peticionFactura.eliminarFactura(id);
+                    peticionFactura.delete(id);
                     JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
                     limpiarTodo();
                 } else {
@@ -323,7 +323,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         lblFecha.setText(fecha);
 
         try {
-            List<ClienteDTO> clientes = peticionCliente.getClientes();
+            List<ClienteDTO> clientes = peticionCliente.getAll();
             clientes.stream()
                     .filter(cliente -> factura.cliente_id.equals(Math.toIntExact(cliente.id)))
                     .findFirst()
@@ -432,7 +432,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 String ultimoFolio = "";
 
-                List<FacturaDTO> facturas = peticionFactura.getFacturas();
+                List<FacturaDTO> facturas = peticionFactura.getAll();
 
                 if (facturas.isEmpty()) {
                     if (folio.equalsIgnoreCase("F-001")) {
@@ -652,16 +652,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             try {
 
                 if (validarTxtFolio()) {
-                    
-                    List<FacturaDTO> facturas = peticionFactura.getFacturas();
+
+                    List<FacturaDTO> facturas = peticionFactura.getAll();
                     int id = facturas.stream()
                             .filter(factura -> factura.folio.equals(folio))
                             .mapToInt(factura -> Math.toIntExact(factura.id))
                             .findFirst()
                             .orElse(0);
-                    
+
                     if (id != 0) {
-                        factura = peticionFactura.getFactura(id);
+                        factura = peticionFactura.getById(id);
                         llenarTabla(factura);
                     } else {
                         if (validarFolio(folio)) {
@@ -698,7 +698,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                     if (validarCodigo(codigo)) {
 
-                        List<ClienteDTO> clientes = peticionFactura.getClientes();
+                        List<ClienteDTO> clientes = peticionCliente.getAll();
 
                         int idCliente = clientes.stream()
                                 .filter(cliente -> cliente.codigo.equals(codigo))
