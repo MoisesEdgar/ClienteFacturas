@@ -19,11 +19,13 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import org.springframework.web.client.RestTemplate;
 
 public class PantallaPrincipal extends javax.swing.JFrame {
 
     private final ModeloFactura modeloFacturas = new ModeloFactura();
+    private final ClienteAPI peticionCliente = new ClienteAPI();
+    private final FacturaAPI peticionFactura = new FacturaAPI();
+    private FacturaDTO factura = new FacturaDTO();
 
     public PantallaPrincipal() {
         initComponents();
@@ -77,11 +79,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             }
         });
     }
-
-    private RestTemplate restTemplate = new RestTemplate();
-    private FacturaDTO factura = new FacturaDTO();
-    private ClienteAPI peticionCliente = new ClienteAPI();
-    private FacturaAPI peticionFactura = new FacturaAPI();
 
     //*****************************BOTONES*****************************
     private void onButonGuardarFacturaClicked(ActionEvent evt) {

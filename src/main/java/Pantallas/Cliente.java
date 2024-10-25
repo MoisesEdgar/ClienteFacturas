@@ -8,8 +8,8 @@ import org.springframework.web.client.RestTemplate;
 
 public class Cliente extends javax.swing.JFrame {
 
-    RestTemplate restTemplate = new RestTemplate();
-    ClienteAPI peticion = new ClienteAPI();
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final ClienteAPI peticion = new ClienteAPI();
 
     public Cliente() {
         initComponents();

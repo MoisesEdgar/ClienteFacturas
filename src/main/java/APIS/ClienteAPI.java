@@ -1,6 +1,7 @@
 package APIS;
 
 import DTO.ClienteDTO;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.http.HttpEntity;
@@ -10,12 +11,12 @@ import org.springframework.web.client.RestTemplate;
 
 public class ClienteAPI {
 
-    private RestTemplate restTemplate = new RestTemplate();
-    private String url = "http://localhost:8080/clientes";
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final String url = "http://localhost:8080/clientes";
 
     public List<ClienteDTO> getAll() throws Exception {
         ClienteDTO[] clientesArray = restTemplate.getForObject(url, ClienteDTO[].class);
-        List<ClienteDTO> clientes = Arrays.asList(clientesArray);
+        List<ClienteDTO> clientes = new ArrayList<>(Arrays.asList(clientesArray));
         return clientes;
     }
 
