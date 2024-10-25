@@ -23,8 +23,8 @@ import java.util.Calendar;
 public class PantallaPrincipal extends javax.swing.JFrame {
 
     private final ModeloFactura modeloFacturas = new ModeloFactura();
-    private final ClienteAPI peticionCliente = new ClienteAPI();
-    private final FacturaAPI peticionFactura = new FacturaAPI();
+    private final ClienteAPI clienteAPI = new ClienteAPI();
+    private final FacturaAPI facturaAPI = new FacturaAPI();
     private FacturaDTO factura = new FacturaDTO();
 
     public PantallaPrincipal() {
@@ -43,41 +43,180 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         btnLimpiar.addActionListener(this::onButonLimpiarClicked);
 
-        txtFolio.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent evt) {
-                txtFolioKeyPressed(evt);
+        txtFolio.addKeyListener(new TextFieldFolioKeyAdapter());
 
-            }
-        });
+        txtCodigo.addKeyListener(new TextFieldCodigoKeyAdapter());
 
-        txtCodigo.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent evt) {
-                txtCodigoKeyPressed(evt);
-            }
-        });
+        txtNombre.addKeyListener(new TextFieldNombreKeyAdapter());
 
-        txtNombre.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent evt) {
-                txtNombreKeyTyped(evt);
-            }
-        });
+        txtCantidad.addKeyListener(new TextFieldCantidadKeyAdapter());
 
-        txtCantidad.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent evt) {
-                txtCantidadKeyTyped(evt);
-            }
-        });
+        txtPrecio.addKeyListener(new TextFieldPrecioKeyAdapter());
+    }
 
-        txtPrecio.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent evt) {
-                txtPrecioKeyTyped(evt);
+    private class TextFieldFolioKeyAdapter extends KeyAdapter {
+
+        @Override
+        public void keyTyped(KeyEvent evt) {
+            if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
+                limpiarLblFactura();
+                limpiarTabla();
+                String folio = txtFolio.getText();
+
+                try {
+
+                    if (txtFolio.getText().isEmpty() == false) {
+
+                        List<FacturaDTO> facturas = facturaAPI.getAll();
+                        int id = facturas.stream()
+                                .filter(factura -> factura.folio.equals(folio))
+                                .mapToInt(factura -> Math.toIntExact(factura.id))
+                                .findFirst()
+                                .orElse(0);
+
+                        if (id != 0) {
+                            factura = facturaAPI.getById(id);
+                            llenarTabla(factura);
+                        } else {
+                            if (validarFormatoFolio(folio)) {
+                                lblFolio.setText(folio);
+                                String fecha = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
+                                lblFecha.setText(fecha);
+
+                                txtCodigo.requestFocus();
+
+                            }
+                        }
+
+                    } else {
+                        JOptionPane.showMessageDialog(null, "No se espesifico el folio de la factura");
+                        limpiarTabla();
+                    }
+
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "No se pudo consultar la factura. Verifique su conexion.");
+                }
             }
-        });
+        }
+
+    }
+
+    private class TextFieldCodigoKeyAdapter extends KeyAdapter {
+
+        @Override
+        public void keyTyped(KeyEvent evt
+        ) {
+            if (txtFolio.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Se debe espesificar un folio");
+                evt.consume();
+                txtFolio.requestFocus();
+            } else if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
+
+                if (txtCodigo.getText().isEmpty() == false) {
+                    try {
+                        String codigo = txtCodigo.getText();
+
+                        if (validarFormatoCodigo(codigo)) {
+
+                            List<ClienteDTO> clientes = clienteAPI.getAll();
+
+                            int idCliente = clientes.stream()
+                                    .filter(cliente -> cliente.codigo.equals(codigo))
+                                    .mapToInt(cliente -> Math.toIntExact(cliente.id))
+                                    .findFirst()
+                                    .orElse(0);
+
+                            if (idCliente == 0) {
+                                JOptionPane.showMessageDialog(null, "No existe un cliente con ese codigo");
+                                Cliente cliente = new Cliente();
+                                cliente.setVisible(true);
+                            } else {
+                                txtNombre.requestFocus();
+                            }
+                        }
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(null, "No se pudo conectar con el servidor. Verifique su conexion.");
+                    }
+
+                } else {
+                    JOptionPane.showMessageDialog(null, "No se espesifico el codigo del cliente");
+                    txtCodigo.requestFocus();
+                }
+            }
+        }
+
+    }
+
+    private class TextFieldNombreKeyAdapter extends KeyAdapter {
+
+        @Override
+        public void keyTyped(KeyEvent evt
+        ) {
+            char c = evt.getKeyChar();
+
+            if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
+                evt.consume();
+            }
+
+            if (txtFolio.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Se debe espesificar un folio");
+                evt.consume();
+                txtFolio.requestFocus();
+            } else if (txtCodigo.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Se debe espesificar un codigo de cliente");
+                evt.consume();
+                txtCodigo.requestFocus();
+            }
+        }
+
+    }
+
+    private class TextFieldCantidadKeyAdapter extends KeyAdapter {
+
+        @Override
+        public void keyTyped(KeyEvent evt
+        ) {
+            char c = evt.getKeyChar();
+
+            if (c < '0' || c > '9') {
+                evt.consume();
+            }
+
+            if (txtFolio.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Se debe espesificar un folio");
+                evt.consume();
+                txtFolio.requestFocus();
+            } else if (txtCodigo.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Se debe espesificar un codigo de cliente");
+                evt.consume();
+                txtCodigo.requestFocus();
+            }
+        }
+
+    }
+
+    private class TextFieldPrecioKeyAdapter extends KeyAdapter {
+
+        @Override
+        public void keyTyped(KeyEvent evt
+        ) {
+            char c = evt.getKeyChar();
+
+            if ((c < '0' || c > '9') && (c != '.')) {
+                evt.consume();
+            }
+            if (txtFolio.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Se debe espesificar un folio");
+                evt.consume();
+                txtFolio.requestFocus();
+            } else if (txtCodigo.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Se debe espesificar un codigo de cliente");
+
+                evt.consume();
+                txtCodigo.requestFocus();
+            }
+        }
+
     }
 
     //*****************************BOTONES*****************************
@@ -87,46 +226,46 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         List<PartidaDTO> partidas = getPartidas();
 
         try {
-            if (validarTxtFolio()) {
-                if (validarTxtCodigo()) {
+
+            if (txtFolio.getText().isEmpty() == false) {
+                if (txtCodigo.getText().isEmpty() == false) {
                     if (partidas.isEmpty()) {
                         JOptionPane.showMessageDialog(this, "La factura debe contener al menos una partida");
                         txtNombre.requestFocus();
                     } else {
 
-                        List<FacturaDTO> facturas = peticionFactura.getAll();
-                        boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
+                        if (nombreInvalido("NOMBRE NO VALIDO")) {
+                            List<FacturaDTO> facturas = facturaAPI.getAll();
+                            boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
+                            if (existenciaFactura == false) {
 
-                        if (existenciaFactura == false) {
+                                List<ClienteDTO> clientes = clienteAPI.getAll();
+                                int idCliente = clientes.stream().filter(cliente -> cliente.codigo.equals(codigo))
+                                        .mapToInt(cliente -> Math.toIntExact(cliente.id))
+                                        .findFirst()
+                                        .orElse(0);
 
-                            List<ClienteDTO> clientes = peticionCliente.getAll();
-                            int idCliente = clientes.stream().filter(cliente -> cliente.codigo.equals(codigo))
-                                    .mapToInt(cliente -> Math.toIntExact(cliente.id))
-                                    .findFirst()
-                                    .orElse(0);
-
-                            if (validarProducto("NOMBRE NO VALIDO")) {
-                                peticionFactura.save(folio, idCliente, getPartidas());
+                                facturaAPI.save(folio, idCliente, getPartidas());
                                 limpiarTodo();
                                 JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
 
                             } else {
-                                JOptionPane.showMessageDialog(this, "Modificar los nombres no validos para poder guardar la factura");
-                            }
 
-                        } else {
-                            if (validarProducto("NOMBRE NO VALIDO")) {
-                                peticionFactura.update(factura);
+                                facturaAPI.update(factura);
                                 limpiarTodo();
                                 JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + folio);
 
-                            } else {
-                                JOptionPane.showMessageDialog(this, "Modificar los nombres no validos para poder guartdar la factura");
                             }
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Modificar los nombres no validos para poder guartdar la factura");
                         }
                     }
+                } else {
+                    JOptionPane.showMessageDialog(this, "No se espesifico el codigo del cliente");
+                    txtCodigo.requestFocus();
                 }
             } else {
+                JOptionPane.showMessageDialog(this, "No se espesifico el folio de la factura");
                 limpiarTabla();
             }
 
@@ -143,14 +282,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         } else {
             try {
 
-                List<FacturaDTO> facturas = peticionFactura.getAll();
+                List<FacturaDTO> facturas = facturaAPI.getAll();
                 int id = facturas.stream()
                         .filter(factura -> factura.folio.equals(folio))
                         .mapToInt(factura -> Math.toIntExact(factura.id))
                         .findFirst().orElse(0);
 
                 if (id != 0) {
-                    peticionFactura.delete(id);
+                    facturaAPI.delete(id);
                     JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
                     limpiarTodo();
                 } else {
@@ -166,14 +305,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
 
-        if (validarTxtPartida()) {
+        if (validarDatosPartida()) {
 
             Partida partida = new Partida();
             partida.nombreArticulo = txtNombre.getText();
             partida.cantidad = Integer.parseInt(txtCantidad.getText());
             partida.precio = Double.parseDouble(txtPrecio.getText());
 
-            if (validarProducto(txtNombre.getText())) {
+            if (nombreInvalido(txtNombre.getText())) {
                 modeloFacturas.agregar(partida);
 
                 if (factura.partidas != null) {
@@ -320,7 +459,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         lblFecha.setText(fecha);
 
         try {
-            List<ClienteDTO> clientes = peticionCliente.getAll();
+            List<ClienteDTO> clientes = clienteAPI.getAll();
             clientes.stream()
                     .filter(cliente -> factura.cliente_id.equals(Math.toIntExact(cliente.id)))
                     .findFirst()
@@ -361,7 +500,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     //*****************************VALIDACIONES*****************************
-    private boolean validarProducto(String producto) {
+    private boolean nombreInvalido(String producto) {
         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
             if (producto.equalsIgnoreCase((String) modeloFacturas.getValueAt(i, 0))) {
                 return false;
@@ -370,7 +509,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return true;
     }
 
-    private boolean validarTxtPartida() {
+    private boolean validarDatosPartida() {
 
         if (txtNombre.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "El nombre del articulo no fue especificado");
@@ -405,31 +544,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return true;
     }
 
-    private boolean validarTxtFolio() {
-        if (txtFolio.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No se espesifico el folio de la factura");
-            txtFolio.requestFocus();
-            return false;
-        }
-        return true;
-    }
-
-    private boolean validarTxtCodigo() {
-        if (txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No se espesifico el codigo del cliente");
-            txtCodigo.requestFocus();
-            return false;
-        }
-        return true;
-    }
-
-    private boolean validarFolio(String folio) {
+    private boolean validarFormatoFolio(String folio) {
         try {
             if (folio.matches("^F-\\d\\d\\d")) {
 
                 String ultimoFolio = "";
 
-                List<FacturaDTO> facturas = peticionFactura.getAll();
+                List<FacturaDTO> facturas = facturaAPI.getAll();
 
                 if (facturas.isEmpty()) {
                     if (folio.equalsIgnoreCase("F-001")) {
@@ -474,7 +595,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         return false;
     }
 
-    private boolean validarCodigo(String codigo) {
+    private boolean validarFormatoCodigo(String codigo) {
         try {
             if (codigo.matches("^C-\\d\\d\\d")) {
                 return true;
@@ -640,139 +761,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
 //*****************************TEXTO*****************************
-    private void txtFolioKeyPressed(KeyEvent evt) {
-        if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
-            limpiarLblFactura();
-            limpiarTabla();
-            String folio = txtFolio.getText();
-
-            try {
-
-                if (validarTxtFolio()) {
-
-                    List<FacturaDTO> facturas = peticionFactura.getAll();
-                    int id = facturas.stream()
-                            .filter(factura -> factura.folio.equals(folio))
-                            .mapToInt(factura -> Math.toIntExact(factura.id))
-                            .findFirst()
-                            .orElse(0);
-
-                    if (id != 0) {
-                        factura = peticionFactura.getById(id);
-                        llenarTabla(factura);
-                    } else {
-                        if (validarFolio(folio)) {
-                            lblFolio.setText(folio);
-                            String fecha = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
-                            lblFecha.setText(fecha);
-
-                            txtCodigo.requestFocus();
-
-                        }
-                    }
-
-                } else {
-                    limpiarTabla();
-                }
-
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "No se pudo consultar la factura. Verifique su conexion.");
-            }
-        }
-    }
-
-    private void txtCodigoKeyPressed(KeyEvent evt) {
-
-        if (txtFolio.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-            evt.consume();
-            txtFolio.requestFocus();
-        } else if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
-
-            if (validarTxtCodigo()) {
-                try {
-                    String codigo = txtCodigo.getText();
-
-                    if (validarCodigo(codigo)) {
-
-                        List<ClienteDTO> clientes = peticionCliente.getAll();
-
-                        int idCliente = clientes.stream()
-                                .filter(cliente -> cliente.codigo.equals(codigo))
-                                .mapToInt(cliente -> Math.toIntExact(cliente.id))
-                                .findFirst()
-                                .orElse(0);
-
-                        if (idCliente == 0) {
-                            JOptionPane.showMessageDialog(this, "No existe un cliente con ese codigo");
-                            Cliente cliente = new Cliente();
-                            cliente.setVisible(true);
-                        } else {
-                            txtNombre.requestFocus();
-                        }
-                    }
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexion.");
-                }
-
-            }
-        }
-    }
-
-    private void txtNombreKeyTyped(KeyEvent evt) {
-        char c = evt.getKeyChar();
-
-        if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z'))) {
-            evt.consume();
-        }
-
-        if (txtFolio.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-            evt.consume();
-            txtFolio.requestFocus();
-        } else if (txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-            evt.consume();
-            txtCodigo.requestFocus();
-        }
-    }
-
-    private void txtCantidadKeyTyped(KeyEvent evt) {
-        char c = evt.getKeyChar();
-
-        if (c < '0' || c > '9') {
-            evt.consume();
-        }
-
-        if (txtFolio.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-            evt.consume();
-            txtFolio.requestFocus();
-        } else if (txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-            evt.consume();
-            txtCodigo.requestFocus();
-        }
-
-    }
-
-    private void txtPrecioKeyTyped(KeyEvent evt) {
-        char c = evt.getKeyChar();
-
-        if ((c < '0' || c > '9') && (c != '.')) {
-            evt.consume();
-        }
-        if (txtFolio.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un folio");
-            evt.consume();
-            txtFolio.requestFocus();
-        } else if (txtCodigo.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Se debe espesificar un codigo de cliente");
-            evt.consume();
-            txtCodigo.requestFocus();
-        }
-    }
-
     private void limpiarTxtsPartida() {
         txtNombre.setText("");
         txtCantidad.setText("");

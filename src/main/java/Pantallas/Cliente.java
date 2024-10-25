@@ -1,113 +1,88 @@
 package Pantallas;
+
 import APIS.ClienteAPI;
 import DTO.ClienteDTO;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import javax.swing.JOptionPane;
-import org.springframework.web.client.RestTemplate;
 
 public class Cliente extends javax.swing.JFrame {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ClienteAPI peticion = new ClienteAPI();
+    private final ClienteAPI clienteAPI = new ClienteAPI();
 
     public Cliente() {
         initComponents();
         btnAgregar.addActionListener(this::onButonAgregarClicked);
+        
+        txtNombre.addKeyListener( new TextFieldNombreKeyAdapter());
+        txtTelefono.addKeyListener(new TextFieldTelefonoKeyAdapter());
+        
+    }
 
-        txtNombre.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtNombreKeyTyped(evt);
+    private class TextFieldNombreKeyAdapter extends KeyAdapter {
+        @Override
+        public void keyTyped(KeyEvent evt) {
+            char c = evt.getKeyChar();
+            if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {
+                evt.consume();
             }
-        });
-        txtTelefono.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtTelefonoKeyTyped(evt);
+        }
+    }
+
+    private class TextFieldTelefonoKeyAdapter extends KeyAdapter {
+
+        @Override
+        public void keyTyped(KeyEvent evt) {
+            char c = evt.getKeyChar();
+            if (c < '0' || c > '9') {
+                evt.consume();
             }
-        });
+        }
     }
 
     private void onButonAgregarClicked(ActionEvent evt) {
+
         try {
-            if (validarTxt()) {
-                if (clienteExistente()) {
+            if (validarDatosCliente()) {
+                if (clienteExistente() == false) {
                     String nombre = txtNombre.getText();
                     String telefono = txtTelefono.getText();
                     String direccion = txtDireccion.getText();
-                    
-                    String codigo = crearCodigo();
-                    peticion.save(nombre, telefono, direccion, codigo);
-                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
 
-                    
+                    clienteAPI.save(nombre, telefono, direccion);
+
+                    List<ClienteDTO> clientes = clienteAPI.getAll();
+                    String codigo = clientes.stream().
+                            filter(cliente -> cliente.nombre.equalsIgnoreCase(nombre)).
+                            map(cliente -> cliente.codigo).
+                            findFirst().
+                            orElse("");
+
+                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
                     this.dispose();
+
+                } else {
+                    JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
+                    txtNombre.setText("");
+                    txtNombre.requestFocus();
                 }
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "No se pudo conectar con el servidor. Verifique su conexión.");
         }
-    }  
-    
-    private String crearCodigo() throws Exception {
-        String codigoAnterior = "";
-        String codigo = "C-";
-       
-        List<ClienteDTO> clientes = peticion.getAll();
-     
-        if (clientes.isEmpty()) {
-            codigo = "C-001";
-        } else {
-         
-        for (ClienteDTO cliente : clientes) {
-            codigoAnterior = cliente.codigo;
-        }
-           
-            String[] salto = codigoAnterior.split("-");
-
-            Integer cont = Integer.parseInt(salto[1]);
-            String ceros = "";
-
-            for (int i = String.valueOf(cont).length(); i < 3;) {
-                i++;
-                ceros = ceros + "0";
-            }
-            
-            codigo = "C-" + ceros + (Integer.parseInt(salto[1]) + 1);
-        }
-        return codigo;
     }
-    
+
     private boolean clienteExistente() throws Exception {
-        
-        List<ClienteDTO> clientes = peticion.getAll();
-        for (ClienteDTO cliente : clientes) {
-            if (cliente.nombre.equalsIgnoreCase(txtNombre.getText())) {
-                JOptionPane.showMessageDialog(this, "El nombre del cliente ya esta registrado");
-                txtNombre.setText("");
-                txtNombre.requestFocus();
-                return false;
-            }
-        }
-        return true;
+        List<ClienteDTO> clientes = clienteAPI.getAll();
+        boolean existenciaCliente = clientes.stream().
+                anyMatch(cliente -> cliente.nombre.equalsIgnoreCase(txtNombre.getText()));
+
+        return existenciaCliente;
     }
 
-    private void txtNombreKeyTyped(java.awt.event.KeyEvent evt) {
-        char c = evt.getKeyChar();
-        if ((c < 'a' || c > 'z') && ((c < 'A' || c > 'Z')) && (c != ' ')) {
-            evt.consume();
-        }
-    }
-
-    private void txtTelefonoKeyTyped(java.awt.event.KeyEvent evt) {
-        char c = evt.getKeyChar();
-        if (c < '0' || c > '9') {
-            evt.consume();
-        }
-    }
-
-    private boolean validarTxt() {
+    private boolean validarDatosCliente() {
 
         if (txtNombre.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "No se especifico el nombre del cliente");
@@ -123,7 +98,7 @@ public class Cliente extends javax.swing.JFrame {
             return false;
         }
 
-        if (txtTelefono.getText().length() < 10) {
+        if (txtTelefono.getText().length() != 10) {
             JOptionPane.showMessageDialog(this, "Numero de telefono no valido");
             txtTelefono.setText("");
             txtTelefono.requestFocus();

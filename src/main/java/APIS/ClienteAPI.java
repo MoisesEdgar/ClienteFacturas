@@ -20,9 +20,9 @@ public class ClienteAPI {
         return clientes;
     }
 
-    public void save(String nombre, String telefono, String direccion, String codigo) throws Exception {
+    public void save(String nombre, String telefono, String direccion) throws Exception {
         ClienteDTO clienteNuevo = new ClienteDTO();
-        clienteNuevo.codigo = codigo;
+
         clienteNuevo.nombre = nombre;
         clienteNuevo.telefono = telefono;
         clienteNuevo.direccion = direccion;
