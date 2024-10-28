@@ -9,4 +9,5 @@ public class ClienteDTO implements Serializable {
     public String nombre;
     public String telefono;
     public String direccion;
+ 
 }

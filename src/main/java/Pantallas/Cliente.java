@@ -5,8 +5,8 @@ import DTO.ClienteDTO;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import javax.swing.JOptionPane;
+import org.springframework.http.ResponseEntity;
 
 public class Cliente extends javax.swing.JFrame {
 
@@ -15,13 +15,14 @@ public class Cliente extends javax.swing.JFrame {
     public Cliente() {
         initComponents();
         btnAgregar.addActionListener(this::onButonAgregarClicked);
-        
-        txtNombre.addKeyListener( new TextFieldNombreKeyAdapter());
+
+        txtNombre.addKeyListener(new TextFieldNombreKeyAdapter());
         txtTelefono.addKeyListener(new TextFieldTelefonoKeyAdapter());
-        
+
     }
 
     private class TextFieldNombreKeyAdapter extends KeyAdapter {
+
         @Override
         public void keyTyped(KeyEvent evt) {
             char c = evt.getKeyChar();
@@ -43,24 +44,16 @@ public class Cliente extends javax.swing.JFrame {
     }
 
     private void onButonAgregarClicked(ActionEvent evt) {
-
         try {
             if (validarDatosCliente()) {
-                if (clienteExistente() == false) {
+                if (clienteExiste(txtNombre.getText()) == false) {
                     String nombre = txtNombre.getText();
                     String telefono = txtTelefono.getText();
                     String direccion = txtDireccion.getText();
 
-                    clienteAPI.save(nombre, telefono, direccion);
+                    ResponseEntity<ClienteDTO> cliente = clienteAPI.save(nombre, telefono, direccion);
 
-                    List<ClienteDTO> clientes = clienteAPI.getAll();
-                    String codigo = clientes.stream().
-                            filter(cliente -> cliente.nombre.equalsIgnoreCase(nombre)).
-                            map(cliente -> cliente.codigo).
-                            findFirst().
-                            orElse("");
-
-                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + codigo);
+                    JOptionPane.showMessageDialog(this, "Se agrego un nuevo cliente con el codigo: " + cliente.getBody().codigo);
                     this.dispose();
 
                 } else {
@@ -74,12 +67,12 @@ public class Cliente extends javax.swing.JFrame {
         }
     }
 
-    private boolean clienteExistente() throws Exception {
-        List<ClienteDTO> clientes = clienteAPI.getAll();
-        boolean existenciaCliente = clientes.stream().
-                anyMatch(cliente -> cliente.nombre.equalsIgnoreCase(txtNombre.getText()));
-
-        return existenciaCliente;
+    private boolean clienteExiste(String nombre) throws Exception {
+        ClienteDTO cliente = clienteAPI.getByNombre(nombre);
+        if (cliente == null) {
+            return false;
+        }
+        return true;
     }
 
     private boolean validarDatosCliente() {

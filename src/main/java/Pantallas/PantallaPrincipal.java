@@ -207,11 +207,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             }
             if (txtFolio.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Se debe espesificar un folio");
+
                 evt.consume();
                 txtFolio.requestFocus();
             } else if (txtCodigo.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Se debe espesificar un codigo de cliente");
-
+                
                 evt.consume();
                 txtCodigo.requestFocus();
             }
@@ -235,6 +236,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else {
 
                         if (nombreInvalido("NOMBRE NO VALIDO")) {
+                            
                             List<FacturaDTO> facturas = facturaAPI.getAll();
                             boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
                             if (existenciaFactura == false) {
