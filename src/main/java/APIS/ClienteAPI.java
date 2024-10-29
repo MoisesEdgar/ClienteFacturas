@@ -1,9 +1,6 @@
 package APIS;
 
 import DTO.ClienteDTO;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +12,18 @@ public class ClienteAPI {
     private final String url = "http://localhost:8080/clientes";
 
     public ClienteDTO getByNombre(String nombre) throws Exception {
-        ClienteDTO cliente = restTemplate.getForObject(url + "?nombre=" + nombre, ClienteDTO.class);
+        ClienteDTO cliente = restTemplate.getForObject(url + "/nombre?nombre=" + nombre, ClienteDTO.class);
         return cliente;
     }
 
-    public List<ClienteDTO> getAll() throws Exception {
-        ClienteDTO[] clientesArray = restTemplate.getForObject(url, ClienteDTO[].class);
-        List<ClienteDTO> clientes = new ArrayList<>(Arrays.asList(clientesArray));
-        return clientes;
+    public ClienteDTO getByCodigo(String codigo) throws Exception {
+        ClienteDTO cliente = restTemplate.getForObject(url + "/codigo?codigo=" + codigo, ClienteDTO.class);
+        return cliente;
+    }
+
+    public ClienteDTO getById(Integer id) throws Exception {
+        ClienteDTO cliente = restTemplate.getForObject(url + "/" + id, ClienteDTO.class);
+        return cliente;
     }
 
     public ResponseEntity<ClienteDTO> save(String nombre, String telefono, String direccion) throws Exception {
@@ -36,5 +37,4 @@ public class ClienteAPI {
         ResponseEntity<ClienteDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, ClienteDTO.class);
         return response;
     }
-
 }

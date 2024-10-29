@@ -19,13 +19,14 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import org.springframework.http.ResponseEntity;
 
 public class PantallaPrincipal extends javax.swing.JFrame {
 
     private final ModeloFactura modeloFacturas = new ModeloFactura();
     private final ClienteAPI clienteAPI = new ClienteAPI();
     private final FacturaAPI facturaAPI = new FacturaAPI();
-    private FacturaDTO factura = new FacturaDTO();
+    private FacturaDTO facturaGlobal = new FacturaDTO();
 
     public PantallaPrincipal() {
         initComponents();
@@ -67,16 +68,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                     if (txtFolio.getText().isEmpty() == false) {
 
-                        List<FacturaDTO> facturas = facturaAPI.getAll();
-                        int id = facturas.stream()
-                                .filter(factura -> factura.folio.equals(folio))
-                                .mapToInt(factura -> Math.toIntExact(factura.id))
-                                .findFirst()
-                                .orElse(0);
+                    facturaGlobal = facturaAPI.getByFolio(folio);
 
-                        if (id != 0) {
-                            factura = facturaAPI.getById(id);
-                            llenarTabla(factura);
+                        if (facturaGlobal != null) {
+                            llenarTabla(facturaGlobal);
                         } else {
                             if (validarFormatoFolio(folio)) {
                                 lblFolio.setText(folio);
@@ -118,18 +113,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                         if (validarFormatoCodigo(codigo)) {
 
-                            List<ClienteDTO> clientes = clienteAPI.getAll();
+                            ClienteDTO cliente = clienteAPI.getByCodigo(codigo);
 
-                            int idCliente = clientes.stream()
-                                    .filter(cliente -> cliente.codigo.equals(codigo))
-                                    .mapToInt(cliente -> Math.toIntExact(cliente.id))
-                                    .findFirst()
-                                    .orElse(0);
-
-                            if (idCliente == 0) {
+                            if (cliente == null) {
                                 JOptionPane.showMessageDialog(null, "No existe un cliente con ese codigo");
-                                Cliente cliente = new Cliente();
-                                cliente.setVisible(true);
+                                Cliente clientePantalla = new Cliente();
+                                clientePantalla.setVisible(true);
                             } else {
                                 txtNombre.requestFocus();
                             }
@@ -212,7 +201,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 txtFolio.requestFocus();
             } else if (txtCodigo.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Se debe espesificar un codigo de cliente");
-                
+
                 evt.consume();
                 txtCodigo.requestFocus();
             }
@@ -236,26 +225,23 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else {
 
                         if (nombreInvalido("NOMBRE NO VALIDO")) {
+
+                            FacturaDTO factura = facturaAPI.getByFolio(folio);
                             
-                            List<FacturaDTO> facturas = facturaAPI.getAll();
-                            boolean existenciaFactura = facturas.stream().anyMatch(factura -> factura.folio.equals(folio));
-                            if (existenciaFactura == false) {
+                            if (factura == null) {
 
-                                List<ClienteDTO> clientes = clienteAPI.getAll();
-                                int idCliente = clientes.stream().filter(cliente -> cliente.codigo.equals(codigo))
-                                        .mapToInt(cliente -> Math.toIntExact(cliente.id))
-                                        .findFirst()
-                                        .orElse(0);
+                                ClienteDTO cliente = clienteAPI.getByCodigo(codigo);
 
-                                facturaAPI.save(folio, idCliente, getPartidas());
+                                ResponseEntity<FacturaDTO> facturaGuardada = facturaAPI.save(folio, Math.toIntExact(cliente.id), partidas);
+                                
                                 limpiarTodo();
-                                JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + folio);
+                                JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + facturaGuardada.getBody().folio);
 
                             } else {
 
-                                facturaAPI.update(factura);
+                                ResponseEntity<FacturaDTO> facturaActualizada = facturaAPI.update(facturaGlobal);
                                 limpiarTodo();
-                                JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + folio);
+                                JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + facturaActualizada.getBody().folio);
 
                             }
                         } else {
@@ -284,14 +270,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         } else {
             try {
 
-                List<FacturaDTO> facturas = facturaAPI.getAll();
-                int id = facturas.stream()
-                        .filter(factura -> factura.folio.equals(folio))
-                        .mapToInt(factura -> Math.toIntExact(factura.id))
-                        .findFirst().orElse(0);
-
-                if (id != 0) {
-                    facturaAPI.delete(id);
+                FacturaDTO factura = facturaAPI.getByFolio(folio);
+                if (factura != null) {
+                    facturaAPI.delete(Math.toIntExact(factura.id));
                     JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
                     limpiarTodo();
                 } else {
@@ -317,14 +298,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             if (nombreInvalido(txtNombre.getText())) {
                 modeloFacturas.agregar(partida);
 
-                if (factura.partidas != null) {
+                if (facturaGlobal.partidas != null) {
                     PartidaDTO nuevaPartida = new PartidaDTO();
 
                     nuevaPartida.nombre_articulo = txtNombre.getText();
                     nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
                     nuevaPartida.precio = Double.parseDouble(txtPrecio.getText());
 
-                    factura.partidas.add(nuevaPartida);
+                    facturaGlobal.partidas.add(nuevaPartida);
                 }
                 limpiarTxtsPartida();
             } else {
@@ -414,19 +395,19 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 if (opc == true) {
 
-                    if (factura.partidas != null) {
-                        if (factura.partidas.isEmpty() == false) {
+                    if (facturaGlobal.partidas != null) {
+                        if (facturaGlobal.partidas.isEmpty() == false) {
                             String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
                             Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
                             Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
 
-                            PartidaDTO partidaNueva = factura.partidas.get(rowIndex);
+                            PartidaDTO partidaNueva = facturaGlobal.partidas.get(rowIndex);
 
                             partidaNueva.nombre_articulo = nombreArticulo;
                             partidaNueva.cantidad = cantidad;
                             partidaNueva.precio = precio;
 
-                            factura.partidas.set(rowIndex, partidaNueva);
+                            facturaGlobal.partidas.set(rowIndex, partidaNueva);
                         }
                     }
                 }
@@ -435,10 +416,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
             case TableModelEvent.DELETE:
 
-                if (factura.partidas != null) {
-                    if (factura.partidas.isEmpty() == false) {
-                        if (rowIndex <= factura.partidas.size()) {
-                            factura.partidas.remove(rowIndex);
+                if (facturaGlobal.partidas != null) {
+                    if (facturaGlobal.partidas.isEmpty() == false) {
+                        if (rowIndex <= facturaGlobal.partidas.size()) {
+                            facturaGlobal.partidas.remove(rowIndex);
                         }
                     }
                 }
@@ -452,7 +433,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         limpiarTodo();
     }
 
-    private void llenarTabla(FacturaDTO factura) {
+    private void llenarTabla(FacturaDTO factura) throws Exception {
         lblSubtotal.setText(factura.subtotal.toString());
         lblTotalIva.setText(factura.total.toString());
         lblFolio.setText(factura.folio);
@@ -460,15 +441,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         String fecha = new SimpleDateFormat("yyyy-MM-dd").format(factura.fecha_expedicion);
         lblFecha.setText(fecha);
 
-        try {
-            List<ClienteDTO> clientes = clienteAPI.getAll();
-            clientes.stream()
-                    .filter(cliente -> factura.cliente_id.equals(Math.toIntExact(cliente.id)))
-                    .findFirst()
-                    .ifPresent(cliente -> txtCodigo.setText(cliente.codigo));
-        } catch (Exception e) {
-
-        }
+        ClienteDTO cliente = clienteAPI.getById(factura.cliente_id);
+        txtCodigo.setText(cliente.codigo);
 
         for (int j = 0; j < factura.partidas.size(); j++) {
             PartidaDTO partida = factura.partidas.get(j);
@@ -552,9 +526,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 String ultimoFolio = "";
 
-                List<FacturaDTO> facturas = facturaAPI.getAll();
+                FacturaDTO factura = facturaAPI.getUltima();
 
-                if (facturas.isEmpty()) {
+                if (factura == null) {
                     if (folio.equalsIgnoreCase("F-001")) {
                         return true;
                     } else {
@@ -564,8 +538,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     }
 
                 } else {
-                    Integer ultimo = facturas.size() - 1;
-                    FacturaDTO factura = facturas.get(ultimo);
+
                     ultimoFolio = factura.folio;
 
                     Integer ultimoNumeracion = getNumeracionFolio(ultimoFolio);
