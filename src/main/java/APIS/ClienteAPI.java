@@ -4,6 +4,7 @@ import DTO.ClienteDTO;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 public class ClienteAPI {
@@ -12,13 +13,25 @@ public class ClienteAPI {
     private final String url = "http://localhost:8080/clientes";
 
     public ClienteDTO getByNombre(String nombre) throws Exception {
-        ClienteDTO cliente = restTemplate.getForObject(url + "/nombre?nombre=" + nombre, ClienteDTO.class);
-        return cliente;
+        try {
+            ClienteDTO cliente = restTemplate.getForObject(url + "/nombre?nombre=" + nombre, ClienteDTO.class);
+            return cliente;
+
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
+        }
+
     }
 
     public ClienteDTO getByCodigo(String codigo) throws Exception {
-        ClienteDTO cliente = restTemplate.getForObject(url + "/codigo?codigo=" + codigo, ClienteDTO.class);
-        return cliente;
+        try {
+            ClienteDTO cliente = restTemplate.getForObject(url + "/codigo?codigo=" + codigo, ClienteDTO.class);
+            return cliente;
+            
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
+        }
+
     }
 
     public ClienteDTO getById(Integer id) throws Exception {
@@ -37,4 +50,10 @@ public class ClienteAPI {
         ResponseEntity<ClienteDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, ClienteDTO.class);
         return response;
     }
+    
+    
+    
+    
+     
+
 }

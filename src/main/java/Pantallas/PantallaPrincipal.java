@@ -67,10 +67,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 try {
 
                     if (txtFolio.getText().isEmpty() == false) {
+                        facturaGlobal = facturaAPI.getByFolio(folio);
 
-                    facturaGlobal = facturaAPI.getByFolio(folio);
-
-                        if (facturaGlobal != null) {
+                        if (facturaGlobal != null && folio.matches("^F-\\d\\d\\d")) {
                             llenarTabla(facturaGlobal);
                         } else {
                             if (validarFormatoFolio(folio)) {
@@ -79,8 +78,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                                 lblFecha.setText(fecha);
 
                                 txtCodigo.requestFocus();
-
                             }
+
                         }
 
                     } else {
@@ -217,44 +216,44 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         try {
 
-            if (txtFolio.getText().isEmpty() == false) {
-                if (txtCodigo.getText().isEmpty() == false) {
-                    if (partidas.isEmpty()) {
-                        JOptionPane.showMessageDialog(this, "La factura debe contener al menos una partida");
-                        txtNombre.requestFocus();
-                    } else {
-
-                        if (nombreInvalido("NOMBRE NO VALIDO")) {
-
-                            FacturaDTO factura = facturaAPI.getByFolio(folio);
-                            
-                            if (factura == null) {
-
-                                ClienteDTO cliente = clienteAPI.getByCodigo(codigo);
-
-                                ResponseEntity<FacturaDTO> facturaGuardada = facturaAPI.save(folio, Math.toIntExact(cliente.id), partidas);
-                                
-                                limpiarTodo();
-                                JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + facturaGuardada.getBody().folio);
-
-                            } else {
-
-                                ResponseEntity<FacturaDTO> facturaActualizada = facturaAPI.update(facturaGlobal);
-                                limpiarTodo();
-                                JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + facturaActualizada.getBody().folio);
-
-                            }
-                        } else {
-                            JOptionPane.showMessageDialog(this, "Modificar los nombres no validos para poder guartdar la factura");
-                        }
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(this, "No se espesifico el codigo del cliente");
-                    txtCodigo.requestFocus();
-                }
-            } else {
+            if (txtFolio.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "No se espesifico el folio de la factura");
                 limpiarTabla();
+                return;
+            }
+
+            if (txtCodigo.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No se espesifico el codigo del cliente");
+                txtCodigo.requestFocus();
+                return;
+            }
+
+            if (partidas.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "La factura debe contener al menos una partida");
+                txtNombre.requestFocus();
+                return;
+            }
+
+            if (nombreInvalido("NOMBRE NO VALIDO") == false) {
+                JOptionPane.showMessageDialog(this, "Modificar los nombres no validos para poder guartdar la factura");
+                return;
+            }
+
+            FacturaDTO factura = facturaAPI.getByFolio(folio);
+
+            if (factura == null) {
+                ClienteDTO cliente = clienteAPI.getByCodigo(codigo);
+
+                ResponseEntity<FacturaDTO> facturaGuardada = facturaAPI.save(folio, Math.toIntExact(cliente.id), partidas);
+                limpiarTodo();
+                JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + facturaGuardada.getBody().folio);
+
+            } else {
+
+                ResponseEntity<FacturaDTO> facturaActualizada = facturaAPI.update(facturaGlobal);
+                limpiarTodo();
+                JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + facturaActualizada.getBody().folio);
+
             }
 
         } catch (Exception e) {
@@ -298,7 +297,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             if (nombreInvalido(txtNombre.getText())) {
                 modeloFacturas.agregar(partida);
 
-                if (facturaGlobal.partidas != null) {
+                if (facturaGlobal != null) {
                     PartidaDTO nuevaPartida = new PartidaDTO();
 
                     nuevaPartida.nombre_articulo = txtNombre.getText();
@@ -395,7 +394,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 if (opc == true) {
 
-                    if (facturaGlobal.partidas != null) {
+                    if (facturaGlobal != null) {
                         if (facturaGlobal.partidas.isEmpty() == false) {
                             String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
                             Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
@@ -416,7 +415,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
             case TableModelEvent.DELETE:
 
-                if (facturaGlobal.partidas != null) {
+                if (facturaGlobal != null) {
                     if (facturaGlobal.partidas.isEmpty() == false) {
                         if (rowIndex <= facturaGlobal.partidas.size()) {
                             facturaGlobal.partidas.remove(rowIndex);
