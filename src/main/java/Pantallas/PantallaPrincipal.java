@@ -298,13 +298,16 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 modeloFacturas.agregar(partida);
 
                 if (facturaGlobal != null) {
-                    PartidaDTO nuevaPartida = new PartidaDTO();
+                    if (facturaGlobal.partidas != null) {
+                        PartidaDTO nuevaPartida = new PartidaDTO();
 
-                    nuevaPartida.nombre_articulo = txtNombre.getText();
-                    nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
-                    nuevaPartida.precio = Double.parseDouble(txtPrecio.getText());
+                        nuevaPartida.nombre_articulo = txtNombre.getText();
+                        nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
+                        nuevaPartida.precio = Double.parseDouble(txtPrecio.getText());
 
-                    facturaGlobal.partidas.add(nuevaPartida);
+                        facturaGlobal.partidas.add(nuevaPartida);
+                    }
+
                 }
                 limpiarTxtsPartida();
             } else {
