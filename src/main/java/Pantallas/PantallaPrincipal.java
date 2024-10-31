@@ -26,7 +26,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private final ModeloFactura modeloFacturas = new ModeloFactura();
     private final ClienteAPI clienteAPI = new ClienteAPI();
     private final FacturaAPI facturaAPI = new FacturaAPI();
-    private FacturaDTO facturaGlobal = new FacturaDTO();
+    private FacturaDTO facturaGlobal;
 
     public PantallaPrincipal() {
         initComponents();
@@ -60,23 +60,25 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         @Override
         public void keyTyped(KeyEvent evt) {
             if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
-                limpiarLblFactura();
+                limpiarInformacionlFactura();
                 limpiarTabla();
+                txtFolio.requestFocus();
                 String folio = txtFolio.getText();
 
                 try {
 
                     if (!txtFolio.getText().isEmpty()) {
-                        facturaGlobal = facturaAPI.getByFolio(folio);
-
-                        if (facturaGlobal != null ) {
+                        FacturaDTO factura = facturaAPI.getByFolio(folio);
+                        if (factura != null) {
+                            facturaGlobal = factura;
                             llenarTabla(facturaGlobal);
                         } else {
                             if (validarFormatoFolio(folio)) {
                                 lblFolio.setText(folio);
                                 String fecha = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
                                 lblFecha.setText(fecha);
-
+                                facturaGlobal = new FacturaDTO();
+                                facturaGlobal.partidas = new ArrayList<>();
                                 txtCodigo.requestFocus();
                             }
 
@@ -85,6 +87,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     } else {
                         JOptionPane.showMessageDialog(null, "No se espesifico el folio de la factura");
                         limpiarTabla();
+                        txtFolio.requestFocus();
                     }
 
                 } catch (Exception e) {
@@ -212,13 +215,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onButonGuardarFacturaClicked(ActionEvent evt) {
         String folio = txtFolio.getText();
         String codigo = txtCodigo.getText();
-        List<PartidaDTO> partidas = getPartidas();
+        List<PartidaDTO> partidas = facturaGlobal.partidas;
 
         try {
 
             if (txtFolio.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "No se espesifico el folio de la factura");
                 limpiarTabla();
+                txtFolio.requestFocus();
                 return;
             }
 
@@ -234,26 +238,23 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 return;
             }
 
-            if (!nombreInvalido("NOMBRE NO VALIDO")) {
-                JOptionPane.showMessageDialog(this, "Modificar los nombres no validos para poder guartdar la factura");
-                return;
-            }
-
-            FacturaDTO factura = facturaAPI.getByFolio(folio);
-
-            if (factura == null) {
+            if (facturaGlobal.id == null) {
                 ClienteDTO cliente = clienteAPI.getByCodigo(codigo);
+                facturaGlobal.folio = folio;
+                facturaGlobal.fecha_expedicion = Calendar.getInstance().getTime();
+                facturaGlobal.cliente_id = cliente.id;
 
-                ResponseEntity<FacturaDTO> facturaGuardada = facturaAPI.save(folio, Math.toIntExact(cliente.id), partidas);
+                ResponseEntity<FacturaDTO> facturaGuardada = facturaAPI.save(facturaGlobal);
                 limpiarTodo();
+                txtFolio.requestFocus();
                 JOptionPane.showMessageDialog(this, "Se agrego una nueva factura con el folio: " + facturaGuardada.getBody().folio);
 
             } else {
 
                 ResponseEntity<FacturaDTO> facturaActualizada = facturaAPI.update(facturaGlobal);
                 limpiarTodo();
+                txtFolio.requestFocus();
                 JOptionPane.showMessageDialog(this, "Se modifico la factura con el folio: " + facturaActualizada.getBody().folio);
-
             }
 
         } catch (Exception e) {
@@ -274,6 +275,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     facturaAPI.delete(Math.toIntExact(factura.id));
                     JOptionPane.showMessageDialog(this, "Se elimino la factura con el folio " + folio);
                     limpiarTodo();
+                    txtFolio.requestFocus();
                 } else {
                     JOptionPane.showMessageDialog(this, "No se encontro el folio de la factura. Verifique que la factura ya fue creada");
                 }
@@ -288,31 +290,22 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void onButonAgregarPartidaClicked(ActionEvent evt) {
 
         if (validarDatosPartida()) {
+            if (!nombreExiste(txtNombre.getText())) {
 
-            Partida partida = new Partida();
-            partida.nombreArticulo = txtNombre.getText();
-            partida.cantidad = Integer.parseInt(txtCantidad.getText());
-            partida.precio = Double.parseDouble(txtPrecio.getText());
+                PartidaDTO partida = new PartidaDTO();
+                partida.nombre_articulo = txtNombre.getText();
+                partida.cantidad = Integer.parseInt(txtCantidad.getText());
+                partida.precio = Double.parseDouble(txtPrecio.getText());
 
-            if (nombreInvalido(txtNombre.getText())) {
                 modeloFacturas.agregar(partida);
+                facturaGlobal.partidas.add(partida);
 
-                if (facturaGlobal != null) {
-                    if (facturaGlobal.partidas != null) {
-                        PartidaDTO nuevaPartida = new PartidaDTO();
-
-                        nuevaPartida.nombre_articulo = txtNombre.getText();
-                        nuevaPartida.cantidad = Integer.parseInt(txtCantidad.getText());
-                        nuevaPartida.precio = Double.parseDouble(txtPrecio.getText());
-
-                        facturaGlobal.partidas.add(nuevaPartida);
-                    }
-
-                }
-                limpiarTxtsPartida();
+                limpiarCapturaPartida();
+                txtNombre.requestFocus();
             } else {
                 JOptionPane.showMessageDialog(this, "Ese articulo ya esta registrado");
-                limpiarTxtsPartida();
+                limpiarCapturaPartida();
+                txtNombre.requestFocus();
             }
         }
 
@@ -323,9 +316,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         int index = tblFactura.getSelectedRow();
         if (index > -1) {
 
-            Partida partida = modeloFacturas.getPartida(index);
-            String nombre = partida.nombreArticulo;
+            PartidaDTO partida = modeloFacturas.getPartida(index);
+            String nombre = partida.nombre_articulo;
             modeloFacturas.eliminar(index);
+
             JOptionPane.showMessageDialog(this, "Se elimino la partida con el articulo: " + nombre);
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione el articulo a Eliminar");
@@ -345,51 +339,47 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                     String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
                     if (nombreArticulo.isEmpty()) {
                         JOptionPane.showMessageDialog(this, "El campo nombre no puede estar vacio");
-                        modeloFacturas.setValueAt("NOMBRE NO VALIDO", evt.getFirstRow(), 0);
-
+                        modeloFacturas.setValueAt(facturaGlobal.partidas.get(rowIndex).nombre_articulo, rowIndex, 0);
                     } else {
+
                         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
-                            if (nombreArticulo.equalsIgnoreCase("NOMBRE NO VALIDO") == false) {
-                                if (nombreArticulo.equalsIgnoreCase((String) modeloFacturas.getValueAt(i, 0))) {
-                                    if (i != rowIndex) {
-                                        JOptionPane.showMessageDialog(this, "El articulos ya esta registrado");
-                                        modeloFacturas.setValueAt("NOMBRE NO VALIDO", evt.getFirstRow(), 0);
-                                        break;
-                                    } else {
-                                        opc = true;
-                                    }
+                            if (nombreArticulo.equalsIgnoreCase((String) modeloFacturas.getValueAt(i, 0))) {
+                                if (i != rowIndex) {
+                                    JOptionPane.showMessageDialog(this, "El articulos ya esta registrado");
+                                    modeloFacturas.setValueAt(facturaGlobal.partidas.get(rowIndex).nombre_articulo, rowIndex, 0);
+                                } else {
+                                    opc = true;
                                 }
                             }
                         }
                     }
-
                 }
 
                 if (colIndex == 1) {
-                    Partida partida = modeloFacturas.getPartida(rowIndex);
+                    PartidaDTO partida = modeloFacturas.getPartida(rowIndex);
                     Integer cantidad = partida.cantidad;
 
                     if (cantidad == null) {
                         JOptionPane.showMessageDialog(this, "El campo cantidad no puede estar vacio");
-                        modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
+                        modeloFacturas.setValueAt(facturaGlobal.partidas.get(rowIndex).cantidad, rowIndex, 1);
                     } else if (cantidad <= 0) {
                         JOptionPane.showMessageDialog(this, "La cantidad deve ser mayor a 0");
-                        modeloFacturas.setValueAt(1, evt.getFirstRow(), 1);
+                        modeloFacturas.setValueAt(facturaGlobal.partidas.get(rowIndex).cantidad, rowIndex, 1);
                     } else {
                         opc = true;
                     }
                 }
 
                 if (colIndex == 2) {
-                    Partida partida = modeloFacturas.getPartida(rowIndex);
+                    PartidaDTO partida = modeloFacturas.getPartida(rowIndex);
                     Double precio = partida.precio;
 
                     if (precio == null) {
                         JOptionPane.showMessageDialog(this, "El campo precio no puede estar vacio");
-                        modeloFacturas.setValueAt(1.0, evt.getFirstRow(), 2);
+                        modeloFacturas.setValueAt(facturaGlobal.partidas.get(rowIndex).precio, rowIndex, 2);
                     } else if (precio < 0.1) {
                         JOptionPane.showMessageDialog(this, "El precio deve ser mayora a 0.1");
-                        modeloFacturas.setValueAt(1.0, evt.getFirstRow(), 2);
+                        modeloFacturas.setValueAt(facturaGlobal.partidas.get(rowIndex).precio, rowIndex, 2);
                     } else {
                         opc = true;
                     }
@@ -397,34 +387,24 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 if (opc == true) {
 
-                    if (facturaGlobal != null) {
-                        if (facturaGlobal.partidas.isEmpty() == false) {
-                            String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
-                            Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
-                            Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
+                    String nombreArticulo = (String) modeloFacturas.getValueAt(rowIndex, 0);
+                    Integer cantidad = (Integer) modeloFacturas.getValueAt(rowIndex, 1);
+                    Double precio = (Double) modeloFacturas.getValueAt(rowIndex, 2);
 
-                            PartidaDTO partidaNueva = facturaGlobal.partidas.get(rowIndex);
+                    PartidaDTO partidaMoidificada = facturaGlobal.partidas.get(rowIndex);
 
-                            partidaNueva.nombre_articulo = nombreArticulo;
-                            partidaNueva.cantidad = cantidad;
-                            partidaNueva.precio = precio;
+                    partidaMoidificada.nombre_articulo = nombreArticulo;
+                    partidaMoidificada.cantidad = cantidad;
+                    partidaMoidificada.precio = precio;
 
-                            facturaGlobal.partidas.set(rowIndex, partidaNueva);
-                        }
-                    }
+                    facturaGlobal.partidas.set(rowIndex, partidaMoidificada);
+
                 }
 
                 break;
 
             case TableModelEvent.DELETE:
-
-                if (facturaGlobal != null) {
-                    if (!facturaGlobal.partidas.isEmpty()) {
-                        if (rowIndex <= facturaGlobal.partidas.size()) {
-                            facturaGlobal.partidas.remove(rowIndex);
-                        }
-                    }
-                }
+                facturaGlobal.partidas.remove(rowIndex);
                 break;
         }
         txtNombre.requestFocus();
@@ -433,6 +413,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     private void onButonLimpiarClicked(ActionEvent evt) {
         limpiarTodo();
+        txtFolio.requestFocus();
     }
 
     private void llenarTabla(FacturaDTO factura) throws Exception {
@@ -449,9 +430,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         for (int j = 0; j < factura.partidas.size(); j++) {
             PartidaDTO partida = factura.partidas.get(j);
 
-            Partida partidasMostrar = new Partida();
+            PartidaDTO partidasMostrar = new PartidaDTO();
 
-            partidasMostrar.nombreArticulo = partida.nombre_articulo;
+            partidasMostrar.nombre_articulo = partida.nombre_articulo;
             partidasMostrar.cantidad = partida.cantidad;
             partidasMostrar.precio = partida.precio;
 
@@ -460,31 +441,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
     }
 
-    private List<PartidaDTO> getPartidas() {
-
-        List<PartidaDTO> partidas = new ArrayList<>();
-
-        for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
-            PartidaDTO partida = new PartidaDTO();
-
-            partida.nombre_articulo = (String) modeloFacturas.getValueAt(i, 0);
-            partida.cantidad = (Integer) modeloFacturas.getValueAt(i, 1);
-            partida.precio = (Double) modeloFacturas.getValueAt(i, 2);
-
-            partidas.add(partida);
-        }
-
-        return partidas;
-    }
-
     //*****************************VALIDACIONES*****************************
-    private boolean nombreInvalido(String producto) {
+    private boolean nombreExiste(String producto) {
         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
             if (producto.equalsIgnoreCase((String) modeloFacturas.getValueAt(i, 0))) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     private boolean validarDatosPartida() {
@@ -526,11 +490,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         try {
             if (folio.matches("^F-\\d\\d\\d")) {
 
-                String ultimoFolio = "";
+                String folioAnterior = facturaAPI.getAnterior();
 
-                FacturaDTO factura = facturaAPI.getUltima();
-
-                if (factura == null) {
+                if (folioAnterior == null) {
                     if (folio.equalsIgnoreCase("F-001")) {
                         return true;
                     } else {
@@ -541,13 +503,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 } else {
 
-                    ultimoFolio = factura.folio;
+                    Integer numeracionNueva = getNumeracionFolio(folio);
+                    Integer numeracionAnterior = getNumeracionFolio(folioAnterior);
 
-                    Integer ultimoNumeracion = getNumeracionFolio(ultimoFolio);
-                    Integer nuevoNumero = getNumeracionFolio(folio);
-
-                    if (nuevoNumero != ultimoNumeracion + 1) {
-                        String con = String.valueOf(ultimoNumeracion + 1);
+                    if (numeracionNueva != numeracionAnterior + 1) {
+                        String con = String.valueOf(numeracionAnterior + 1);
                         String ceros = "";
 
                         for (int i = con.length(); i < 3;) {
@@ -555,8 +515,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                             ceros = ceros + "0";
                         }
 
-                        JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser F-" + ceros + (ultimoNumeracion + 1));
-                        txtFolio.setText("F-" + ceros + (ultimoNumeracion + 1));
+                        JOptionPane.showMessageDialog(this, "El formato del folio no es valido. La nuemracion debe ser F-" + ceros + (numeracionAnterior + 1));
+                        txtFolio.setText("F-" + ceros + (numeracionAnterior + 1));
                         return false;
                     }
                     return true;
@@ -605,20 +565,13 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         lblSubtotal.setText(String.valueOf(Math.round(totalNeto * 100) / 100d));
         lblTotalIva.setText(String.valueOf(Math.round(totalIva * 100) / 100d));
+
     }
 
     //*****************************MODELO*****************************
-    private static class Partida {
-
-        public String nombreArticulo;
-        public Integer cantidad;
-        public Double precio;
-        public Double total;
-    }
-
     private static class ModeloFactura extends AbstractTableModel {
 
-        private final List<Partida> partidas = new ArrayList<>();
+        private final List<PartidaDTO> partidas = new ArrayList<>();
 
         @Override
         public int getRowCount() {
@@ -663,28 +616,27 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
 
-            Partida partida = partidas.get(rowIndex);
+            PartidaDTO partida = partidas.get(rowIndex);
 
             switch (columnIndex) {
                 case 0:
-                    return partida.nombreArticulo;
+                    return partida.nombre_articulo;
                 case 1:
                     return partida.cantidad;
                 case 2:
                     return partida.precio;
                 case 3:
                     return (partida.cantidad * partida.precio);
-
             }
             return null;
         }
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            Partida partida = partidas.get(rowIndex);
+            PartidaDTO partida = partidas.get(rowIndex);
             switch (columnIndex) {
                 case 0:
-                    partida.nombreArticulo = (String) aValue;
+                    partida.nombre_articulo = (String) aValue;
                     fireTableCellUpdated(rowIndex, columnIndex);
                     break;
                 case 1:
@@ -705,12 +657,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             return columnIndex != 3;
         }
 
-        public void agregar(Partida partida) {
+        public void agregar(PartidaDTO partida) {
             partidas.add(partida);
             fireTableRowsInserted(getRowCount(), getRowCount());
         }
 
-        public Partida getPartida(int rowIndex) {
+        public PartidaDTO getPartida(int rowIndex) {
             return partidas.get(rowIndex);
         }
 
@@ -738,14 +690,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
 //*****************************TEXTO*****************************
-    private void limpiarTxtsPartida() {
+    private void limpiarCapturaPartida() {
         txtNombre.setText("");
         txtCantidad.setText("");
         txtPrecio.setText("");
         txtNombre.requestFocus();
     }
 
-    private void limpiarLblFactura() {
+    private void limpiarInformacionlFactura() {
         lblFecha.setText("");
         lblFolio.setText("");
         lblTotalIva.setText("");
@@ -755,16 +707,14 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     private void limpiarTabla() {
         modeloFacturas.partidas.clear();
         modeloFacturas.fireTableDataChanged();
-        txtFolio.requestFocus();
     }
 
     private void limpiarTodo() {
         txtFolio.setText("");
         txtCodigo.setText("");
-        limpiarTxtsPartida();
-        limpiarLblFactura();
+        limpiarCapturaPartida();
+        limpiarInformacionlFactura();
         limpiarTabla();
-        txtFolio.requestFocus();
     }
 
     @SuppressWarnings("unchecked")

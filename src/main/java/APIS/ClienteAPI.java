@@ -34,7 +34,7 @@ public class ClienteAPI {
 
     }
 
-    public ClienteDTO getById(Integer id) throws Exception {
+    public ClienteDTO getById(Long id) throws Exception {
         ClienteDTO cliente = restTemplate.getForObject(url + "/" + id, ClienteDTO.class);
         return cliente;
     }

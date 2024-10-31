@@ -14,9 +14,9 @@ public class FacturaAPI {
     private final RestTemplate restTemplate = new RestTemplate();
     private final String url = "http://localhost:8080/facturas";
 
-    public FacturaDTO getUltima() throws Exception {
+    public String getAnterior() throws Exception {
         try {
-            FacturaDTO factura = restTemplate.getForObject(url + "/ultima", FacturaDTO.class);
+            String factura = restTemplate.getForObject(url + "/anterior", String.class);
             return factura;
         } catch (HttpClientErrorException.NotFound e) {
             return null;
@@ -32,13 +32,8 @@ public class FacturaAPI {
         }
     }
 
-    public ResponseEntity<FacturaDTO> save(String folio, Integer id, List<PartidaDTO> partidas) throws Exception {
-        FacturaDTO facturaNueva = new FacturaDTO();
-        facturaNueva.folio = folio;
-        facturaNueva.cliente_id = id;
-        facturaNueva.partidas = partidas;
-
-        HttpEntity<FacturaDTO> request = new HttpEntity<>(facturaNueva);
+    public ResponseEntity<FacturaDTO> save(FacturaDTO facturaGlobal) throws Exception {
+        HttpEntity<FacturaDTO> request = new HttpEntity<>(facturaGlobal);
         ResponseEntity<FacturaDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, FacturaDTO.class);
         return response;
     }
