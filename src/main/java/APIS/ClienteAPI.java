@@ -50,10 +50,5 @@ public class ClienteAPI {
         ResponseEntity<ClienteDTO> response = restTemplate.exchange(url, HttpMethod.POST, request, ClienteDTO.class);
         return response;
     }
-    
-    
-    
-    
-     
 
 }

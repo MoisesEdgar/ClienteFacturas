@@ -66,10 +66,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                 try {
 
-                    if (txtFolio.getText().isEmpty() == false) {
+                    if (!txtFolio.getText().isEmpty()) {
                         facturaGlobal = facturaAPI.getByFolio(folio);
 
-                        if (facturaGlobal != null && folio.matches("^F-\\d\\d\\d")) {
+                        if (facturaGlobal != null ) {
                             llenarTabla(facturaGlobal);
                         } else {
                             if (validarFormatoFolio(folio)) {
@@ -106,7 +106,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 txtFolio.requestFocus();
             } else if (evt.getKeyChar() == KeyEvent.VK_ENTER) {
 
-                if (txtCodigo.getText().isEmpty() == false) {
+                if (!txtCodigo.getText().isEmpty()) {
                     try {
                         String codigo = txtCodigo.getText();
 
@@ -234,7 +234,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 return;
             }
 
-            if (nombreInvalido("NOMBRE NO VALIDO") == false) {
+            if (!nombreInvalido("NOMBRE NO VALIDO")) {
                 JOptionPane.showMessageDialog(this, "Modificar los nombres no validos para poder guartdar la factura");
                 return;
             }
@@ -419,7 +419,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             case TableModelEvent.DELETE:
 
                 if (facturaGlobal != null) {
-                    if (facturaGlobal.partidas.isEmpty() == false) {
+                    if (!facturaGlobal.partidas.isEmpty()) {
                         if (rowIndex <= facturaGlobal.partidas.size()) {
                             facturaGlobal.partidas.remove(rowIndex);
                         }
