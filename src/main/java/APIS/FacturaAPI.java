@@ -1,8 +1,6 @@
 package APIS;
 
 import DTO.FacturaDTO;
-import DTO.PartidaDTO;
-import java.util.List;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;

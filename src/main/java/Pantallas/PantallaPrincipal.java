@@ -442,9 +442,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     //*****************************VALIDACIONES*****************************
-    private boolean nombreExiste(String producto) {
+    private boolean nombreExiste(String nombre) {
         for (int i = 0; i < modeloFacturas.getRowCount(); i++) {
-            if (producto.equalsIgnoreCase((String) modeloFacturas.getValueAt(i, 0))) {
+            if (nombre.equalsIgnoreCase((String) modeloFacturas.getValueAt(i, 0))) {
                 return true;
             }
         }
