@@ -292,13 +292,18 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         if (validarDatosPartida()) {
             if (!nombreExiste(txtNombre.getText())) {
 
-                PartidaDTO partida = new PartidaDTO();
-                partida.nombre_articulo = txtNombre.getText();
+                PartidaDTO partidaDTO = new PartidaDTO();
+                partidaDTO.nombre_articulo = txtNombre.getText();
+                partidaDTO.cantidad = Integer.parseInt(txtCantidad.getText());
+                partidaDTO.precio = Double.parseDouble(txtPrecio.getText());
+                
+                Partida partida = new Partida();
+                partida.nombreArticulo = txtNombre.getText();
                 partida.cantidad = Integer.parseInt(txtCantidad.getText());
                 partida.precio = Double.parseDouble(txtPrecio.getText());
 
                 modeloFacturas.agregar(partida);
-                facturaGlobal.partidas.add(partida);
+                facturaGlobal.partidas.add(partidaDTO);
 
                 limpiarCapturaPartida();
                 txtNombre.requestFocus();
@@ -315,12 +320,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         int index = tblFactura.getSelectedRow();
         if (index > -1) {
-
-            PartidaDTO partida = modeloFacturas.getPartida(index);
-            String nombre = partida.nombre_articulo;
             modeloFacturas.eliminar(index);
 
-            JOptionPane.showMessageDialog(this, "Se elimino la partida con el articulo: " + nombre);
+            JOptionPane.showMessageDialog(this, "Se elimino la partida con el articulo: " + facturaGlobal.partidas.get(index).nombre_articulo);
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione el articulo a Eliminar");
         }
@@ -356,7 +358,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
                 if (colIndex == 1) {
-                    PartidaDTO partida = modeloFacturas.getPartida(rowIndex);
+                    Partida partida = modeloFacturas.getPartida(rowIndex);
                     Integer cantidad = partida.cantidad;
 
                     if (cantidad == null) {
@@ -371,7 +373,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 }
 
                 if (colIndex == 2) {
-                    PartidaDTO partida = modeloFacturas.getPartida(rowIndex);
+                    Partida partida = modeloFacturas.getPartida(rowIndex);
                     Double precio = partida.precio;
 
                     if (precio == null) {
@@ -430,9 +432,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         for (int j = 0; j < factura.partidas.size(); j++) {
             PartidaDTO partida = factura.partidas.get(j);
 
-            PartidaDTO partidasMostrar = new PartidaDTO();
+            Partida partidasMostrar = new Partida();
 
-            partidasMostrar.nombre_articulo = partida.nombre_articulo;
+            partidasMostrar.nombreArticulo = partida.nombre_articulo;
             partidasMostrar.cantidad = partida.cantidad;
             partidasMostrar.precio = partida.precio;
 
@@ -569,9 +571,17 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     }
 
     //*****************************MODELO*****************************
+    private static class Partida {
+
+        public String nombreArticulo;
+        public Integer cantidad;
+        public Double precio;
+        public Double total;
+    }
+
     private static class ModeloFactura extends AbstractTableModel {
 
-        private final List<PartidaDTO> partidas = new ArrayList<>();
+        private final List<Partida> partidas = new ArrayList<>();
 
         @Override
         public int getRowCount() {
@@ -616,11 +626,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
 
-            PartidaDTO partida = partidas.get(rowIndex);
+            Partida partida = partidas.get(rowIndex);
 
             switch (columnIndex) {
                 case 0:
-                    return partida.nombre_articulo;
+                    return partida.nombreArticulo;
                 case 1:
                     return partida.cantidad;
                 case 2:
@@ -633,10 +643,10 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            PartidaDTO partida = partidas.get(rowIndex);
+            Partida partida = partidas.get(rowIndex);
             switch (columnIndex) {
                 case 0:
-                    partida.nombre_articulo = (String) aValue;
+                    partida.nombreArticulo = (String) aValue;
                     fireTableCellUpdated(rowIndex, columnIndex);
                     break;
                 case 1:
@@ -657,12 +667,12 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             return columnIndex != 3;
         }
 
-        public void agregar(PartidaDTO partida) {
+        public void agregar(Partida partida) {
             partidas.add(partida);
             fireTableRowsInserted(getRowCount(), getRowCount());
         }
 
-        public PartidaDTO getPartida(int rowIndex) {
+        public Partida getPartida(int rowIndex) {
             return partidas.get(rowIndex);
         }
 
