@@ -320,9 +320,11 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         int index = tblFactura.getSelectedRow();
         if (index > -1) {
+            Partida partida = modeloFacturas.getPartida(index);
+            String nombre = partida.nombreArticulo;
             modeloFacturas.eliminar(index);
 
-            JOptionPane.showMessageDialog(this, "Se elimino la partida con el articulo: " + facturaGlobal.partidas.get(index).nombre_articulo);
+            JOptionPane.showMessageDialog(this, "Se elimino la partida con el articulo: " + nombre);
         } else {
             JOptionPane.showMessageDialog(this, "Seleccione el articulo a Eliminar");
         }
