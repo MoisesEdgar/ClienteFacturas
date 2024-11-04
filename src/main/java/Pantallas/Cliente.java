@@ -46,7 +46,7 @@ public class Cliente extends javax.swing.JFrame {
     private void onButonAgregarClicked(ActionEvent evt) {
         try {
             if (validarDatosCliente()) {
-                if (clienteExiste(txtNombre.getText()) == false) {
+                if (!clienteExiste(txtNombre.getText())) {
                     String nombre = txtNombre.getText();
                     String telefono = txtTelefono.getText();
                     String direccion = txtDireccion.getText();
