@@ -13,7 +13,7 @@ public class FacturaDTO implements Serializable{
     public Date fecha_expedicion;
     public Double subtotal;
     public Double total;
-    public Long cliente_id;
+    public ClienteDTO cliente;
     public List<PartidaDTO> partidas;
 
 }

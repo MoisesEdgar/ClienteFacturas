@@ -114,8 +114,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         String codigo = txtCodigo.getText();
 
                         if (validarFormatoCodigo(codigo)) {
-
                             ClienteDTO cliente = clienteAPI.getByCodigo(codigo);
+                            facturaGlobal.cliente = cliente;
 
                             if (cliente == null) {
                                 JOptionPane.showMessageDialog(null, "No existe un cliente con ese codigo");
@@ -214,7 +214,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
     //*****************************BOTONES*****************************
     private void onButonGuardarFacturaClicked(ActionEvent evt) {
         String folio = txtFolio.getText();
-        String codigo = txtCodigo.getText();
         List<PartidaDTO> partidas = facturaGlobal.partidas;
 
         try {
@@ -239,10 +238,9 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             }
 
             if (facturaGlobal.id == null) {
-                ClienteDTO cliente = clienteAPI.getByCodigo(codigo);
                 facturaGlobal.folio = folio;
                 facturaGlobal.fecha_expedicion = Calendar.getInstance().getTime();
-                facturaGlobal.cliente_id = cliente.id;
+      
 
                 ResponseEntity<FacturaDTO> facturaGuardada = facturaAPI.save(facturaGlobal);
                 limpiarTodo();
@@ -428,8 +426,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
         String fecha = new SimpleDateFormat("yyyy-MM-dd").format(factura.fecha_expedicion);
         lblFecha.setText(fecha);
 
-        ClienteDTO cliente = clienteAPI.getById(factura.cliente_id);
-        txtCodigo.setText(cliente.codigo);
+        txtCodigo.setText(factura.cliente.codigo);
 
         for (int j = 0; j < factura.partidas.size(); j++) {
             PartidaDTO partida = factura.partidas.get(j);
