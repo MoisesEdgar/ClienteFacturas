@@ -114,14 +114,15 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                         String codigo = txtCodigo.getText();
 
                         if (validarFormatoCodigo(codigo)) {
+
                             ClienteDTO cliente = clienteAPI.getByCodigo(codigo);
-                            facturaGlobal.cliente = cliente;
 
                             if (cliente == null) {
                                 JOptionPane.showMessageDialog(null, "No existe un cliente con ese codigo");
                                 Cliente clientePantalla = new Cliente();
                                 clientePantalla.setVisible(true);
                             } else {
+                                facturaGlobal.cliente_id = cliente.id;
                                 txtNombre.requestFocus();
                             }
                         }
@@ -240,7 +241,6 @@ public class PantallaPrincipal extends javax.swing.JFrame {
             if (facturaGlobal.id == null) {
                 facturaGlobal.folio = folio;
                 facturaGlobal.fecha_expedicion = Calendar.getInstance().getTime();
-      
 
                 ResponseEntity<FacturaDTO> facturaGuardada = facturaAPI.save(facturaGlobal);
                 limpiarTodo();
@@ -294,7 +294,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
                 partidaDTO.nombre_articulo = txtNombre.getText();
                 partidaDTO.cantidad = Integer.parseInt(txtCantidad.getText());
                 partidaDTO.precio = Double.parseDouble(txtPrecio.getText());
-                
+
                 Partida partida = new Partida();
                 partida.nombreArticulo = txtNombre.getText();
                 partida.cantidad = Integer.parseInt(txtCantidad.getText());
@@ -425,8 +425,8 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
         String fecha = new SimpleDateFormat("yyyy-MM-dd").format(factura.fecha_expedicion);
         lblFecha.setText(fecha);
-
-        txtCodigo.setText(factura.cliente.codigo);
+        ClienteDTO cliente = clienteAPI.getById(facturaGlobal.cliente_id);
+        txtCodigo.setText(cliente.codigo);
 
         for (int j = 0; j < factura.partidas.size(); j++) {
             PartidaDTO partida = factura.partidas.get(j);

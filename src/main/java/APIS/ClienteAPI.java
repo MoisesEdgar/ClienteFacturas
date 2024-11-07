@@ -20,9 +20,8 @@ public class ClienteAPI {
         } catch (HttpClientErrorException.NotFound e) {
             return null;
         }
-
     }
-
+    
     public ClienteDTO getByCodigo(String codigo) throws Exception {
         try {
             ClienteDTO cliente = restTemplate.getForObject(url + "/codigo?codigo=" + codigo, ClienteDTO.class);
@@ -31,7 +30,6 @@ public class ClienteAPI {
         } catch (HttpClientErrorException.NotFound e) {
             return null;
         }
-
     }
 
     public ClienteDTO getById(Long id) throws Exception {
