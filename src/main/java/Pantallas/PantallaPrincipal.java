@@ -119,7 +119,7 @@ public class PantallaPrincipal extends javax.swing.JFrame {
 
                             if (cliente == null) {
                                 JOptionPane.showMessageDialog(null, "No existe un cliente con ese codigo");
-                                Cliente clientePantalla = new Cliente();
+                                PantallaCliente clientePantalla = new PantallaCliente();
                                 clientePantalla.setVisible(true);
                             } else {
                                 facturaGlobal.cliente_id = cliente.id;

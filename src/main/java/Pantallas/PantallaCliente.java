@@ -8,11 +8,11 @@ import java.awt.event.KeyEvent;
 import javax.swing.JOptionPane;
 import org.springframework.http.ResponseEntity;
 
-public class Cliente extends javax.swing.JFrame {
+public class PantallaCliente extends javax.swing.JFrame {
 
     private final ClienteAPI clienteAPI = new ClienteAPI();
 
-    public Cliente() {
+    public PantallaCliente() {
         initComponents();
         btnAgregar.addActionListener(this::onButonAgregarClicked);
 
@@ -207,7 +207,7 @@ public class Cliente extends javax.swing.JFrame {
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Cliente().setVisible(true);
+                new PantallaCliente().setVisible(true);
             }
         });
     }
